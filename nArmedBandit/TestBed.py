@@ -10,12 +10,14 @@ class TestBed:
                  agents,
                  num_arms=10, 
                  num_trials=2000, 
-                 num_pulls=1000):
+                 num_pulls=1000, 
+                 verbose=False):
         self._num_arms = num_arms
         self._num_trials = num_trials
         self._num_pulls = num_pulls
         self._agents = agents
         self._results = np.zeros((len(agents), num_pulls))
+        self._verbose = verbose
     
     def _reset_agents(self):
         for agent in self._agents:
@@ -23,6 +25,8 @@ class TestBed:
     
     def run(self):
         for trial_num in range(self._num_trials):
+            if (self._verbose and trial_num % 25 == 0):
+                print("Completed " + str(trial_num) + " trials.")
             b = NArmedBandit(self._num_arms)
             self._reset_agents()
             for pull in range(self._num_pulls):
