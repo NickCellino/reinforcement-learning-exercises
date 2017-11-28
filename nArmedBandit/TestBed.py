@@ -1,6 +1,7 @@
-from NArmedBandit import NArmedBandit
+from NArmedBandit import NArmedBandit, MovingNArmedBandit
 import numpy as np
 import matplotlib.pyplot as plt
+from time import time
 
 class TestBed:
 
@@ -28,6 +29,17 @@ class TestBed:
             if (self._verbose and trial_num % 25 == 0):
                 print("Completed " + str(trial_num) + " trials.")
             b = NArmedBandit(self._num_arms)
+            self._reset_agents()
+            for pull in range(self._num_pulls):
+                for i in range(len(self._agents)):
+                    reward = self._agents[i].do_pull(b)
+                    self._results[i, pull] += reward
+
+    def run_moving(self):
+        for trial_num in range(self._num_trials):
+            if (self._verbose and trial_num % 25 == 0):
+                print("Completed " + str(trial_num) + " trials.")
+            b = MovingNArmedBandit(self._num_arms, 0.1)
             self._reset_agents()
             for pull in range(self._num_pulls):
                 for i in range(len(self._agents)):

@@ -1,17 +1,20 @@
-from Agent import VariableEpsilonGreedyAgent
+from Agent import EpsilonGreedyAgent, FixedAlphaEpsilonGreedyAgent
 from TestBed import TestBed
 
 agents = []
 labels = []
 num_arms = 10
-num_turns = 1000
-agents.append(VariableEpsilonGreedyAgent(num_arms, num_turns, 1.01))
-labels.append("Exponentially Decreasing Epsilon Greedy Agent (alpha=1.01)")
-agents.append(VariableEpsilonGreedyAgent(num_arms, num_turns, 1.05))
-labels.append("Exponentially Decreasing Epsilon Greedy Agent (alpha=1.05)")
-agents.append(VariableEpsilonGreedyAgent(num_arms, num_turns, 1.1))
-labels.append("Exponentially Decreasing Epsilon Greedy Agent (alpha=1.1)")
+num_trials = 200
+num_pulls = 10000
+# agents.append(EpsilonGreedyAgent(0, num_arms))
+# labels.append("Epsilon Greedy Agent (e = 0)")
+# agents.append(EpsilonGreedyAgent(0.01, num_arms))
+# labels.append("Epsilon Greedy Agent (e = 0.01)")
+agents.append(EpsilonGreedyAgent(0.1, num_arms))
+labels.append("Epsilon Greedy Agent (e = 0.1)")
+agents.append(FixedAlphaEpsilonGreedyAgent(0.1, num_arms))
+labels.append("Fixed Alpha Greedy Agent (alpha = 0.1)")
 
-tb = TestBed(agents, num_arms, num_trials=200, verbose=True)
-tb.run()
+tb = TestBed(agents, num_arms, num_trials=num_trials, num_pulls=num_pulls, verbose=True)
+tb.run_moving()
 tb.plot_results(labels)

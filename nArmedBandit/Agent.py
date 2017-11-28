@@ -60,7 +60,16 @@ class EpsilonGreedyAgent(Agent):
             return random_integers(0, len(self._results) - 1)
         else:
             return np.argmax(self._value_estimates)
-    
+
+class FixedAlphaEpsilonGreedyAgent(EpsilonGreedyAgent):
+
+    def __init__(self, epsilon, num_arms, alpha=0.1):
+        EpsilonGreedyAgent.__init__(self, epsilon, num_arms)
+        self._alpha = alpha
+
+    def _update_value_estimate(self, reward, arm):
+        self._value_estimates[arm] += self._alpha * (reward - self._value_estimates[arm])
+
 class VariableEpsilonGreedyAgent(EpsilonGreedyAgent):
 
     def __init__(self, num_arms, num_turns, decline_rate=1.001):
