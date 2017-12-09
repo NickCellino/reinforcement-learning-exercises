@@ -4,7 +4,7 @@ This repository contains exercises from [Reinforcement Learning: An Introduction
 Each subdirectory in this project contains an overview of a topic covered
 in the book, the results from the exercises, and Python code for the exercises.
 
-## Exercises
+## Topics
 
 1. [Chapter 2 - Bandit Problems](./bandit_problems)
 
@@ -21,11 +21,10 @@ python3.6 -m venv venv
 This creates a folder called `venv` in which we can install Python libraries
 like [numpy](http://www.numpy.org/) and [matplotlib](http://matplotlib.org/).
 
-To tell your system to use this environment, run:
+To tell your system to use this environment instead of the system-wide python environment, run:
 ```
 source venv/bin/activate
 ```
-This tells your system to use this virtual environment instead of the default system environment.
 You will need to do this anytime you want to run examples.
 
 
