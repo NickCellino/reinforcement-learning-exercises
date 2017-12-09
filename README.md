@@ -33,7 +33,7 @@ Next, to install the required libraries into the virtual environment, run:
 pip install -r requirements.txt
 ```
 
-All set! Now we can go into any of the subdirectories and run examples by running
+All set! Run exercises by calling runner.py followed by the module of the exercise. For example:
 ```
-python example_name.py
+python runner.py bandit_problems.exercises.ex_2_2_a
 ```

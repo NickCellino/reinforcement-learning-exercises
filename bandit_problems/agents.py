@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from numpy.random import random, random_integers, normal
 import numpy as np
 
@@ -43,6 +45,10 @@ class SoftmaxAgent(Agent):
     def _choose_arm(self):
         dist = self._gibbs_distribution()
         return self._get_sample(dist)
+
+    def __str__(self):
+        return f'Softmax Agent (t={self._temperature})'
+
         
 class EpsilonGreedyAgent(Agent):
 
@@ -61,6 +67,10 @@ class EpsilonGreedyAgent(Agent):
         else:
             return np.argmax(self._value_estimates)
 
+    def __str__(self):
+        return f'Epsilon Greedy Agent (ε={self._epsilon})'
+
+
 class FixedAlphaEpsilonGreedyAgent(EpsilonGreedyAgent):
 
     def __init__(self, epsilon, num_arms, alpha=0.1):
@@ -69,6 +79,10 @@ class FixedAlphaEpsilonGreedyAgent(EpsilonGreedyAgent):
 
     def _update_value_estimate(self, reward, arm):
         self._value_estimates[arm] += self._alpha * (reward - self._value_estimates[arm])
+
+    def __str__(self):
+        return f'Fixed Alpha Epsilon Greedy Agent (ε={self._epsilon}, α={self._alpha})'
+
 
 class VariableEpsilonGreedyAgent(EpsilonGreedyAgent):
 
@@ -92,3 +106,6 @@ class VariableEpsilonGreedyAgent(EpsilonGreedyAgent):
         reward = Agent.do_pull(self, bandit)
         self._num_pulls += 1
         return reward
+
+    def __str__(self):
+        return f'Variable Epsilon Greedy Agent (decline_rate={self._decline_rate})'
