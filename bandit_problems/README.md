@@ -68,12 +68,24 @@ Here are some results showing the performance of the epsilon greedy methods.
 
 ![Epsilon Greedy Methods](./results/exercise_2_2_a.png)
 
+The values at each pull are averages over 2000 trials.
+
 We can see that ε=0 does not perform too well. This is because it does not spend any
 time exploring. It picks some slot machine as the best and chooses it every time no
 matter what. With ε=0.1, we can see that we do a little better. We spend more time exploring
 so we are able to get better results, but we plateau because we only ever choose our best
 estimate for 90% of pulls. With ε=0.01, we do not learn as fast, but we eventually reach a
-higher average reward than ε=0.1 because we choose our best estimate 99% of the time.
+higher average reward than ε=0.1 because once we figure out which slot machine is best,
+we choose it 99% of the time.
+
+Maybe we can improve this a little. Maybe we'd want to do a little more exploring
+at the beginning of our session and as we get towards the end, be more greedy. We can
+do that!
+
+![Decreasing Epsilon Methods](./results/decreasing_epsilon.png)
+
+The different lines here show methods where we decrease epsilon at different
+rates.
 
 ### Softmax Method
 
