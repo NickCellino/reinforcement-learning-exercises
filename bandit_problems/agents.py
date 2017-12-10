@@ -84,28 +84,45 @@ class FixedAlphaEpsilonGreedyAgent(EpsilonGreedyAgent):
         return f'Fixed Alpha Epsilon Greedy Agent (ε={self._epsilon}, α={self._alpha})'
 
 
-class VariableEpsilonGreedyAgent(EpsilonGreedyAgent):
+class AdjustableEpsilonGreedyAgent(EpsilonGreedyAgent):
 
-    def __init__(self, num_arms, num_turns, decline_rate=1.001):
+    def __init__(self, num_arms, num_turns):
         EpsilonGreedyAgent.__init__(self, 1.0, num_arms)
         self._num_turns = num_turns
         self._num_pulls = 0
-        self._decline_rate = decline_rate
-    
+
     def reset(self):
         self._num_pulls = 0
         EpsilonGreedyAgent.reset(self)
     
-    # Calculates and sets the next epsilon value
-    def _adjust_epsilon(self):
-        self._epsilon = ((1 - (self._decline_rate**(-self._num_pulls))) /
-                         (self._decline_rate**(-self._num_turns) - 1)) + 1
-        
     def do_pull(self, bandit):
         self._adjust_epsilon()
         reward = Agent.do_pull(self, bandit)
         self._num_pulls += 1
         return reward
 
+
+class ExponentialDecreaseEpsilonGreedyAgent(AdjustableEpsilonGreedyAgent):
+
+    def __init__(self, num_arms, num_turns, decline_rate=1.001):
+        AdjustableEpsilonGreedyAgent.__init__(self, num_arms, num_turns)
+        self._decline_rate = decline_rate
+
+    # Calculates and sets the next epsilon value
+    def _adjust_epsilon(self):
+        self._epsilon = ((1 - (self._decline_rate**(-self._num_pulls))) /
+                         (self._decline_rate**(-self._num_turns) - 1)) + 1
+
     def __str__(self):
-        return f'Variable Epsilon Greedy Agent (decline_rate={self._decline_rate})'
+        return f'Exponentially Decreasing Epsilon Greedy Agent (decline_rate={self._decline_rate})'
+
+
+class LinearDecreaseEpsilonGreedyAgent(AdjustableEpsilonGreedyAgent):
+
+    # Sets the next epsilon value
+    def _adjust_epsilon(self):
+        progress = float(self._num_pulls) / self._num_turns
+        self._epsilon = 1 - progress
+
+    def __str__(self):
+        return f'Linearly Decreasing Epsilon Greedy Agent'
