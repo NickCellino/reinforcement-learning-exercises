@@ -37,3 +37,9 @@ All set! Run exercises by calling runner.py followed by the module of the exerci
 ```
 python runner.py bandit_problems.exercises.ex_2_2_a
 ```
+
+For some of the exercises, you can pass arguments to specify certain things about their execution (for example, number of trials in the case
+of the n-armed-bandit problems). You can see what these parameters are by passing `-h` like so:
+```
+python runner.py bandit_problems.exercises.ex_2_2_a -h
+```

@@ -14,7 +14,7 @@ parser.add_argument('--trials',
 parser.add_argument('--pulls',
                     type=int,
                     help='Number of pulls per trial',
-                    default=3000)
+                    default=1000)
 args = parser.parse_args()
 
 # Parameters
@@ -23,9 +23,11 @@ num_trials = args.trials
 num_pulls = args.pulls
 
 agents = []
-agents.append(EpsilonGreedyAgent(0, num_arms))
-agents.append(EpsilonGreedyAgent(0.01, num_arms))
-agents.append(EpsilonGreedyAgent(0.1, num_arms))
+agents.append(SoftmaxAgent(0.1, num_arms))
+agents.append(SoftmaxAgent(0.2, num_arms))
+agents.append(SoftmaxAgent(0.3, num_arms))
+agents.append(SoftmaxAgent(0.4, num_arms))
+agents.append(SoftmaxAgent(0.5, num_arms))
 
 tb = TestBed(agents, num_arms, num_trials=num_trials, num_pulls=num_pulls)
 tb.run()
