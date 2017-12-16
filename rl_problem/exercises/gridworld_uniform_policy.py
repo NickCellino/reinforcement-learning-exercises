@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.linalg import inv
+from rl_problem.gridworld import GridWorld
 
 GRID_SIZE = 5
 
@@ -81,7 +82,7 @@ for row in range(GRID_SIZE):
 
 # Handle special cases A (0, 1) and B (0, 3)
 A = to1d(0, 1)
-A_prime = to1d(4, 0)
+A_prime = to1d(4, 1)
 trans_prob[A, :] = 0.0
 trans_prob[A, A_prime] = 1.0
 
@@ -96,10 +97,13 @@ rewards[B] = 5
 inverse = inv(np.identity(trans_prob.shape[0]) - 0.9 * trans_prob)
 value = np.matmul(inverse, rewards)
 value = value.reshape((GRID_SIZE, GRID_SIZE))
-print(value)
+# print(value)
 
-# # uniform_policy = gridworld.get_uniform_policy()
-#
-# gridworld.get_value_function(uniform_policy)
+g = GridWorld()
+uniform_policy = g.get_uniform_policy()
+transition_probs = g.get_transition_probabilities(uniform_policy)
 
-# gridworld.get_optimal_policy()
+# print(trans_prob.reshape(5, 5, 5, 5))
+# tp = transition_probs.reshape(5,5,5,5)
+print(np.array_equal(transition_probs, trans_prob))
+# print(transition_probs == trans_prob)
