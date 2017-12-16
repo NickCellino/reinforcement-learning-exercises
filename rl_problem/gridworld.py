@@ -67,37 +67,38 @@ class GridWorld:
 
         return state_transitions
 
-    # def get_value_function(self, policy):
-        # transition_probabilities = self.get_transition_probabilities(policy)
-        # pass
+    def get_value_function(self, policy, gamma=0.9):
+        # Solve V = R + gamma*P(s,s')*V
+        transition_probabilities = self.get_transition_probabilities(policy)
+        expected_rewards = self.get_expected_rewards(policy).reshape(self.size**2)
+        right_side_inverse = np.linalg.inv(np.identity(self.size**2) - gamma*transition_probabilities)
+        return np.matmul(right_side_inverse, expected_rewards)
 
     def get_transition_probabilities(self, policy):
         ret = np.zeros((self.size**2, self.size**2))
         for action in self.action_space:
             # p(a|s)
-            action_policy = policy[action, :, :].reshape(self.size**2)
-            ap = np.tile(action_policy, (self.size**2, 1))
-            print(ap)
-            # p(s'|s,a)
-            # print(self._transitions[action, :, :, :, :].reshape((self.size**2, self.size**2)))
+            action_policy = np.tile(policy[action, :, :].reshape(self.size**2), (self.size**2, 1))
+            # p(s'|s, a)
             state_transitions = self._transitions[action, :, :, :, :].reshape(self.size**2, self.size**2)
-            ret = np.add(ret, np.multiply(ap, state_transitions))
-            # print(np.matmul(action_policy, state_transitions))
-            # print(action_policy)
-            # print(state_transitions.reshape(5, 5, 5, 5))
-            # ret = np.add(ret, np.matmul(action_policy, state_transitions))
+            ret = np.add(ret, np.multiply(action_policy, state_transitions))
         return ret
 
-        # for row, col in product(range(self.size), range(self.size)):
-        #     action_probabilities = policy[:, row, col]
-        #     state_transitions = self._transitions[:, row, col, :, :].reshape(4, self.size**2)
-        #     transition_probabilities[row*self.size + col, :] = np.matmul(action_probabilities, state_transitions)
-        # return transition_probabilities
-
-
-if __name__ == '__main__':
-    g = GridWorld()
-    policy = g.get_uniform_policy()
-    expected_rewards = g.get_expected_rewards(policy)
-
-    print(g.get_transition_probabilities(policy))
+    def get_optimal_value_function(self, gamma=0.9, convergence=0.01):
+        ret = np.zeros(self.size**2)
+        copy = np.copy(ret)
+        diff = None
+        while diff is None or diff > convergence:
+            for row, col in product(range(self.size), range(self.size)):
+                new_reward = None
+                for action in self.action_space:
+                    next_state_distribution = self._transitions[action, row, col].reshape(self.size**2)
+                    expected_rewards = np.matmul(next_state_distribution, ret)
+                    test = self._rewards[action, row, col] + gamma*expected_rewards
+                    if new_reward is None or test > new_reward:
+                        new_reward = test
+                copy[row*self.size + col] = new_reward
+            diff = np.sum(np.fabs(np.subtract(ret, copy)))
+            ret = copy
+            copy = np.copy(ret)
+        return ret
