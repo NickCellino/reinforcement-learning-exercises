@@ -7,6 +7,7 @@ in the book, the results from the exercises, and Python code for the exercises.
 ## Topics
 
 1. [Chapter 2 - Bandit Problems](./bandit_problems)
+2. [Chapter 3 - The Reinforcement Learning Problem](./rl_problem)
 
 ## Getting Started
 This project uses Python 3.6 and [venv](https://docs.python.org/3/library/venv.html)
