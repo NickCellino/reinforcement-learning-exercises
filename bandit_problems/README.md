@@ -99,6 +99,33 @@ rates.
 
 ### Softmax Method
 
+With the epsilon greedy method, we kind of took an all or nothing approach
+to exploration and exploitation. Either we were exploring, and we'd choose
+our arm totally randomly or we were exploiting and being totally greedy.
+Softmax methods, on the other hand, explore all the time but use their estimates
+of each arm's value to weight how often they choose that arm. This means that
+they will choose the arm they estimate to be the best most often and the arm
+they estimate to be the worst least often and every arm in between is weighted
+accordingly as well.
+
 ![Softmax Methods](./results/exercise_2_2_b.png)
 
-More details soon...
+They have a parameter called the "temperature" which essentially says how
+much to weigh our estimates. Higher temperatures place less importance on
+our estimates and choose actions equi-probably. Lower temperatures place more
+importance on our estimates and so choose the actions we estimate to be better
+more often. As the temperature approaches 0, we start to be greedy 100% of the
+time. Picking the temperature is tricky and seems to be mostly a trial and error
+type thing. I am not sure if there is a more scientific way to approach that.
+
+### 10-Armed Bandit Showdown
+
+So which bandit performed the best?
+
+![Softmax vs Epsilon Greedy](./results/showdown.png)
+
+![Softmax vs Epsilon Greedy Optimal Choice %](./results/showdown_op.png)
+
+The quantity we are trying to maximize is total rewards which is represented
+graphically as the area under the curve. In this experiment, the strategy
+in which we decrease epsilon over time performed the best.
