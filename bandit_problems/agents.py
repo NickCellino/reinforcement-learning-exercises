@@ -23,7 +23,7 @@ class Agent:
         arm = self._choose_arm()
         reward = bandit.pull_arm(arm)
         self._update_value_estimate(reward, arm)
-        return reward
+        return reward, bandit.was_optimal_choice(arm)
 
 class SoftmaxAgent(Agent):
 
@@ -97,9 +97,9 @@ class AdjustableEpsilonGreedyAgent(EpsilonGreedyAgent):
     
     def do_pull(self, bandit):
         self._adjust_epsilon()
-        reward = Agent.do_pull(self, bandit)
+        reward, was_optimal = Agent.do_pull(self, bandit)
         self._num_pulls += 1
-        return reward
+        return reward, was_optimal
 
 
 class ExponentialDecreaseEpsilonGreedyAgent(AdjustableEpsilonGreedyAgent):

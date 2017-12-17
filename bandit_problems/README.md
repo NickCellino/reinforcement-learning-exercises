@@ -78,6 +78,14 @@ estimate for 90% of pulls. With ε=0.01, we do not learn as fast, but we eventua
 higher average reward than ε=0.1 because once we figure out which slot machine is best,
 we choose it 99% of the time.
 
+![Epsilon Greedy Methods Optimal Choice %](./results/exercise_2_2_a_optimality.png)
+
+This graph shows the percent of the time that each method has chosen the optimal action
+at each pull number. We see that for ε=0, it rarely finds the optimal action,
+and it doesn't spend any time exploring. For ε=0.1, it spends 10% of its
+time exploring so it learns very fast, but it also plateaus because it will
+only exploit its knowledge 90% of the time.
+
 Maybe we can improve this a little. Maybe we'd want to do a little more exploring
 at the beginning of our session and as we get towards the end, be more greedy. We can
 do that!
@@ -86,6 +94,8 @@ do that!
 
 The different lines here show methods where we decrease epsilon at different
 rates.
+
+![Decreasing Epsilon Methods Optimal Choice %](./results/decreasing_epsilon_optimality.png)
 
 ### Softmax Method
 

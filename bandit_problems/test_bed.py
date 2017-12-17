@@ -19,6 +19,7 @@ class TestBed:
         self._num_pulls = num_pulls
         self._agents = agents
         self._results = np.zeros((len(agents), num_pulls))
+        self._optimal_choices = np.zeros((len(agents), num_pulls))
 
     def _reset_agents(self):
         for agent in self._agents:
@@ -30,8 +31,10 @@ class TestBed:
             self._reset_agents()
             for pull in range(self._num_pulls):
                 for i in range(len(self._agents)):
-                    reward = self._agents[i].do_pull(b)
+                    reward, was_optimal = self._agents[i].do_pull(b)
                     self._results[i, pull] += reward
+                    if was_optimal:
+                        self._optimal_choices[i, pull] += 1
 
     def run_moving(self):
         for trial_num in tqdm(range(self._num_trials)):
@@ -39,10 +42,13 @@ class TestBed:
             self._reset_agents()
             for pull in range(self._num_pulls):
                 for i in range(len(self._agents)):
-                    reward = self._agents[i].do_pull(b)
+                    reward, was_optimal = self._agents[i].do_pull(b)
                     self._results[i, pull] += reward
+                    if was_optimal:
+                        self._optimal_choices[i, pull] += 1
 
     def plot_results(self, title):
+        plt.figure(1)
         avgs = self._results / self._num_trials
         for i in range(len(self._agents)):
             plt.plot(avgs[i], self._plot_colors[i%len(self._plot_colors)], label=str(self._agents[i]))
@@ -50,4 +56,14 @@ class TestBed:
         plt.xlabel('Pull Number')
         plt.ylabel('Average Reward')
         plt.legend(loc=4)
+
+        plt.figure(2)
+        optimal_choices_avgs = self._optimal_choices / self._num_trials
+        for i in range(len(self._agents)):
+            plt.plot(optimal_choices_avgs[i], self._plot_colors[i%len(self._plot_colors)], label=str(self._agents[i]))
+        plt.title(title)
+        plt.xlabel('Pull Number')
+        plt.ylabel('Percent Optimal Action Choice')
+        plt.legend(loc=4)
+
         plt.show()
