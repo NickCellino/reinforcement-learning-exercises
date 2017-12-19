@@ -55,10 +55,14 @@ class JacksCarRental:
         b = state[1]
         return (a - action, b + action)
 
-    def get_expected_reward(self, state, action):
-        # Dealership A
-        a = state[0]
-        b = state[1]
+    def get_expected_reward(self, action, current_state):
+        moving_car_cost = abs(action) * 2
+        a_cars = current_state[0] - action
+        expected_rental_sales_a = 10 * max(self.EXPECTED_REQUESTS_A, a_cars)
+        b_cars = current_state[1] + action
+        expected_rental_sales_b = 10 * max(self.EXPECTED_REQUESTS_B, b_cars)
+        return expected_rental_sales_a + expected_rental_sales_b - moving_car_cost
+
 
     def next_state_probability(self, next, state, action):
         after_move = (state[0] - action, state[1] + action)
@@ -71,29 +75,44 @@ class JacksCarRental:
             b_prob = self.poisson(self.EXPECTED_RETURNS_B, required_returns_to_b)
             return a_prob*b_prob
 
-    def evaluate_policy(self, policy, gamma=0.9, convergence=0.01):
+    def evaluate_policy(self, policy, gamma=0.9, convergence=1.0):
         """
         Generates a value function for a given deterministic policy.
         The policy should specify the action [-5, +5] for each
         state, which is the number of cars at location A and the number
         of cars at location B, where each ranges from 0 to 20.
 
-        :param policy: A 21 x 21 x 1 array
-        :return: A 21 x 21 x 1 array
+        :param policy: A 21 x 21 array
+        :return: A 21 x 21  array
         """
-        ret = np.zeros((policy.shape[0]))
+        ret = np.zeros((21, 21))
         diff = np.inf
         while diff > convergence:
             temp = np.copy(ret)
             for a, b in product(range(policy.shape[0]), range(policy.shape[1])):
                 action = policy[a, b]
-                # next_state = self.get_next_state((a, b), action)
-                for a_prime, b_prime in product(range(policy.shape[0], policy.shape[1])):
-                    probability_next_state = self.next_state_probability((a_prime, b_prime), (a, b), action)
-
-                ret[a, b] = self.get_expected_reward((a, b), action) + gamma*temp[next_state]
+                next_state_gain_expectation = 0.0
+                for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
+                    immediate_a = max(a - action, 0)
+                    immediate_b = max(b + action, 20)
+                    probability_a_prime = self.a_transitions[immediate_a, a_prime]
+                    probability_b_prime = self.b_transitions[immediate_b, b_prime]
+                    probability_next_state = probability_a_prime * probability_b_prime
+                    immediate_reward = self.get_expected_reward(action, (a, b))
+                    next_state_gain_expectation += probability_next_state * (immediate_reward + gamma*temp[a_prime, b_prime])
+                ret[a, b] = next_state_gain_expectation
             diff = np.max(np.fabs(np.subtract(ret, temp)))
+            print(diff)
         return ret
+
+    def get_greedy_policy(self, value):
+        """
+        Generates a policy that is greedy with respect to the provided value function.
+
+        :param value: A 21 x 21 array
+        :return: A 21 x 21 array
+        """
+        pass
 
     def plot_policy(self, policy):
         plt.figure()
@@ -115,9 +134,12 @@ class JacksCarRental:
 
 if __name__ == '__main__':
     cars = JacksCarRental()
+    # random_policy = np.random.randint(-5, 6, (21, 21))
+    zero_policy = np.zeros((21, 21), dtype=int)
+    value = cars.evaluate_policy(zero_policy)
+    next_policy = cars.get_greedy_policy(value)
+    # print(value)
     # print(cars.a_transitions)
-    print(np.sum(cars.a_transitions, axis=1))
-    print(np.sum(cars.b_transitions, axis=1))
 
     # print(cars.next_state_probability((5, 5), (6, 6), 0))
     # print(cars.poisson(3, 3))
