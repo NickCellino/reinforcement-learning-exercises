@@ -144,7 +144,7 @@ class JacksCarRental:
 
     def print_progress(self, state):
         progress = (state[0] + (state[1] / self.max_cars)) / self.max_cars
-        print('%.2f' % (100 * progress))
+        print('%.2f %%' % (100 * progress))
 
     def get_greedy_policy(self, value, gamma=0.9):
         """
@@ -165,8 +165,17 @@ class JacksCarRental:
                     next_state_gain_expectation = self.expected_return((a, b), action, value, gamma)
                     if next_state_gain_expectation > best_action[1]:
                         best_action[0] = action
-                policy[a, b] = best_action
-        return policy
+                policy[a, b] = best_action[0]
+        return policy.astype(int)
+
+    def run_policy_improvement(self, gamma=0.9, convergence=5.0):
+        initial_policy = np.zeros((self.max_cars, self.max_cars), dtype=int)
+        policies = [initial_policy]
+        while len(policies) < 2 or not np.array_equal(policies[-1], policies[-2]):
+            value = self.evaluate_policy(policies[-1], gamma, convergence)
+            greedy = self.get_greedy_policy(value)
+            policies.append(greedy)
+        return policies
 
     def plot_policies(self, policies):
         for i in range(len(policies)):
@@ -188,31 +197,24 @@ class JacksCarRental:
 
         plt.show()
 
-    def show_plots(self):
-        pass
 
 if __name__ == '__main__':
     MAX_CARS = 21
     cars = JacksCarRental(max_cars=MAX_CARS)
-    policies = []
-    policies.append(np.zeros((MAX_CARS, MAX_CARS), dtype=int))
-    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
-    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
-    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
-    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
-    cars.plot_policies(policies)
 
-    # value = cars.evaluate_policy(policy)
-    # greedy = cars.get_greedy_policy(value)
+    policy = np.zeros((MAX_CARS, MAX_CARS), dtype=int)
+    value = cars.evaluate_policy(policy)
+    greedy = cars.get_greedy_policy(value)
     # cars.plot_policy(greedy)
-    #
-    # value1 = cars.evaluate_policy(greedy.astype(int))
-    # greedy2 = cars.get_greedy_policy(value1)
+
+    value1 = cars.evaluate_policy(greedy.astype(int))
+    greedy2 = cars.get_greedy_policy(value1)
     # cars.plot_policy(greedy2)
-    #
-    # value2 = cars.evaluate_policy(greedy2.astype(int))
-    # greedy3 = cars.get_greedy_policy(value2)
+
+    value2 = cars.evaluate_policy(greedy2.astype(int))
+    greedy3 = cars.get_greedy_policy(value2)
     # cars.plot_policy(greedy3)
+    cars.plot_policies([greedy, greedy2, greedy3])
 
     # temp = None
     # figure_counter = 1
