@@ -12,23 +12,57 @@ class JacksCarRental:
     EXPECTED_REQUESTS_B = 4
     MOVING_CAR_COST = 2
     RENTAL_SALE_PRICE = 10
-    POISSON_CUTOFF = 12
 
-    def __init__(self, size=21):
-        self.size = size
+    # Don't bother computing poisson for anything above this
+    # It will be very close to 0
+    POISSON_CUTOFF = 14
+
+    def __init__(self, max_cars=21):
+        self.max_cars = max_cars
+        self.action_space = np.arange(-5, 6)
         self.a_transitions = self.init_transition_probabilities('A')
         self.b_transitions = self.init_transition_probabilities('B')
+        self.a_expected_revenue = self.init_expected_revenue('A')
+        self.b_expected_revenue = self.init_expected_revenue('B')
+        # self.expected_rewards = self.init_expected_rewards()
+
+    def init_expected_revenue(self, dealership):
+        revenue = np.zeros((self.action_space.shape[0], self.max_cars, self.max_cars))
+        for cars in range(self.max_cars):
+            for cars_after in range(self.max_cars):
+                for action in self.action_space:
+                    if (dealership is 'A' and cars - action < 0) or (dealership is 'B' and cars + action < 0):
+                        continue
+                    revenue[action, cars, cars_after] = self.get_expected_revenue(dealership, action, cars, cars_after)
+        return revenue
+
+    def get_expected_revenue(self, dealership, action, now, after):
+        if dealership is 'A':
+            after_move = now - action
+        elif dealership is 'B':
+            after_move = now + action
+        else:
+            raise ValueError('Dealership must be A or B')
+
+        expected_revenue = 0.0
+        for requests in range(self.POISSON_CUTOFF):
+            probability = self.expected_requests_probability(dealership, requests)
+            expected_revenue += probability * self.RENTAL_SALE_PRICE * min(after_move, requests)
+
+        return expected_revenue
 
     def init_transition_probabilities(self, dealership):
         ret = np.zeros((21, 21))
         for current, next in product(range(ret.shape[0]), range(ret.shape[1])):
             probability = 0.0
-            for requests, returns in product(range(21), range(21)):
-                if min(max(current + returns - requests, 0), 20) == next:
+            for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
+                cars_after_requests = max(current - requests, 0)
+                cars_after_returns = min(cars_after_requests + returns, 20)
+                if cars_after_returns == next:
                     request_probability = self.expected_requests_probability(dealership, requests)
                     return_probability = self.expected_returns_probability(dealership, returns)
                     probability += request_probability * return_probability
-                ret[current, next] = probability
+            ret[current, next] = probability
         return ret
 
     def expected_returns_probability(self, dealership, returns):
@@ -48,22 +82,44 @@ class JacksCarRental:
             raise ValueError('Dealership must be A or B')
 
     def poisson(self, expected, num):
-        if num < 0:
-            return 0.0
         ret = ((expected**num)/math.factorial(num))*math.exp(-expected)
         return ret
 
-    def get_expected_reward(self, action, current_state):
+    def get_expected_reward(self, action, current, next):
         cost = abs(action) * self.MOVING_CAR_COST
-        for returns in range(self.POISSON_CUTOFF):
-            for requests in range(self.POISSON_CUTOFF):
-                pass
 
-        a_cars = min(max(current_state[0] - action, 0), 20)
-        expected_rental_sales_a = 10 * min(self.EXPECTED_REQUESTS_A, a_cars)
-        b_cars = min(max(current_state[1] + action, 0), 20)
-        expected_rental_sales_b = 10 * min(self.EXPECTED_REQUESTS_B, b_cars)
-        return expected_rental_sales_a + expected_rental_sales_b - cost
+        a_cars = current[0] - action
+        if a_cars < 0:
+            raise ValueError("Action causing negative cars at A")
+
+        # expected_sales_a = 0.0
+        # expected_sales_a = self.get_expected_revenue('A', action, current[0], next[0])
+        expected_sales_a = self.a_expected_revenue[action, current[0], next[0]]
+        # for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
+        #     cars_after_requests = max(a_cars - requests, 0)
+        #     reward = self.RENTAL_SALE_PRICE * min(a_cars, requests)
+        #     cars_after_returns = min(cars_after_requests + returns, 20)
+        #     if cars_after_returns == next[0]:
+        #         request_probability = self.expected_requests_probability('A', requests)
+        #         return_probability = self.expected_returns_probability('A', returns)
+        #         expected_sales_a += request_probability * return_probability * reward
+
+        b_cars = current[1] + action
+        if b_cars < 0:
+            raise ValueError("Action causing negative cars at B")
+
+        # expected_sales_b = 0.0
+        expected_sales_b = self.b_expected_revenue[action, current[1], next[1]]
+        # for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
+        #     cars_after_requests = max(b_cars - requests, 0)
+        #     reward = self.RENTAL_SALE_PRICE * min(b_cars, requests)
+        #     cars_after_returns = min(cars_after_requests + returns, 20)
+        #     if cars_after_returns == next[1]:
+        #         request_probability = self.expected_requests_probability('B', requests)
+        #         return_probability = self.expected_returns_probability('B', returns)
+        #         expected_sales_b += request_probability * return_probability * reward
+
+        return expected_sales_a + expected_sales_b - cost
 
     def next_state_probability(self, current, next, action):
         immediate_a = current[0] - action
@@ -81,7 +137,8 @@ class JacksCarRental:
         next_state_gain_expectation = 0.0
         for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
             probability_next_state = self.next_state_probability((a, b), (a_prime, b_prime), action)
-            immediate_reward = self.get_expected_reward(action, (a, b))
+            immediate_reward = self.get_expected_reward(action, (a, b), (a_prime, b_prime))
+            # immediate_reward = self.expected_rewards[action, a, b, a_prime, b_prime]
             next_state_gain_expectation += probability_next_state * (immediate_reward + gamma * state_value[a_prime, b_prime])
         return next_state_gain_expectation
 
@@ -122,6 +179,9 @@ class JacksCarRental:
             best_action_gain = - np.inf
             self.print_progress((a, b))
             for action in np.arange(-5, 6):
+                if a - action < 0 or b + action < 0:
+                    # This action is not allowed if it makes one dealership have less than 0 cars
+                    continue
                 next_state_gain_expectation = self.expected_return((a, b), action, value, gamma)
                 if next_state_gain_expectation > best_action_gain:
                     best_action = action
@@ -148,7 +208,6 @@ class JacksCarRental:
 
 if __name__ == '__main__':
     cars = JacksCarRental()
-    # random_policy = np.random.randint(-5, 6, (21, 21))
     policy = np.zeros((21, 21), dtype=int)
     value = cars.evaluate_policy(policy)
     greedy = cars.get_greedy_policy(value)
