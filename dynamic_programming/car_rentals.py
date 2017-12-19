@@ -95,8 +95,12 @@ class JacksCarRental:
         ret = ((expected**num)/math.factorial(num))*math.exp(-expected)
         return ret
 
+    def get_action_cost(self, current, action):
+        return abs(action) * self.MOVING_CAR_COST
+
     def get_expected_reward(self, action, current, next):
-        cost = abs(action) * self.MOVING_CAR_COST
+        cost = self.get_action_cost(current, action)
+
         expected_sales_a = self.a_expected_revenue[action, current[0], next[0]]
         expected_sales_b = self.b_expected_revenue[action, current[1], next[1]]
 
@@ -217,3 +221,24 @@ class JacksCarRental:
                     plt.text(j, i, '%d' % policy[i,j], horizontalalignment='center', verticalalignment='center')
 
             plt.colorbar()
+
+class JacksCarRentalWithHelp(JacksCarRental):
+
+    SECOND_PARKING_LOT_COST = 4
+
+    def get_action_cost(self, current, action):
+        if action > 0:
+            moving_cost = self.MOVING_CAR_COST * (action - 1)
+        else:
+            moving_cost = self.MOVING_CAR_COST * abs(action)
+
+        overnight_cars_a = current[0] - action
+        overnight_cars_b = current[1] + action
+
+        parking_cost = 0
+        if overnight_cars_a > 10:
+            parking_cost += self.SECOND_PARKING_LOT_COST
+        if overnight_cars_b > 10:
+            parking_cost += self.SECOND_PARKING_LOT_COST
+
+        return moving_cost + parking_cost
