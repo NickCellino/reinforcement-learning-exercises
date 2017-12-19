@@ -165,6 +165,7 @@ class JacksCarRental:
                     next_state_gain_expectation = self.expected_return((a, b), action, value, gamma)
                     if next_state_gain_expectation > best_action[1]:
                         best_action[0] = action
+                        best_action[1] = next_state_gain_expectation
                 policy[a, b] = best_action[0]
         return policy.astype(int)
 
