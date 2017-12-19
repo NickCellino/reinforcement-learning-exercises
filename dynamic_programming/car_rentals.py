@@ -21,7 +21,7 @@ class JacksCarRental:
         for current, next in product(range(ret.shape[0]), range(ret.shape[1])):
             probability = 0.0
             for requests, returns in product(range(21), range(21)):
-                if min(max(current + returns - requests, 0), 20) == next:
+                if min(max(current - requests, 0) + returns, 20) == next:
                     request_probability = self.expected_requests_probability(dealership, requests)
                     return_probability = self.expected_returns_probability(dealership, returns)
                     probability += request_probability * return_probability
@@ -106,7 +106,7 @@ class JacksCarRental:
         for a, b in product(range(policy.shape[0]), range(policy.shape[1])):
             best_action = None
             best_action_gain = - np.inf
-            print(f'{100*float(a) / policy.shape[0]} %')
+            print(f'{100*(float(a) + float(b)/policy.shape[1]) / policy.shape[0]} %')
             for action in np.arange(-5, 6):
                 next_state_gain_expectation = 0.0
                 for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
