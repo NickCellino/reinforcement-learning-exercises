@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import math
+from tqdm import tqdm
 
 class JacksCarRental:
 
@@ -133,18 +135,15 @@ class JacksCarRental:
         """
         ret = np.zeros((self.max_cars, self.max_cars))
         diff = np.inf
+        print(f'Evaluating policy until diff < {convergence}')
         while diff > convergence:
             temp = np.copy(ret)
             for a in range(policy.shape[0]):
                 for b in range(policy.shape[1]):
                     ret[a, b] = self.expected_return((a, b), policy[a, b], temp, gamma)
             diff = np.max(np.fabs(np.subtract(ret, temp)))
-            print(diff)
+            print(f'Diff: {diff}')
         return ret
-
-    def print_progress(self, state):
-        progress = (state[0] + (state[1] / self.max_cars)) / self.max_cars
-        print('%.2f %%' % (100 * progress))
 
     def get_greedy_policy(self, value, gamma=0.9):
         """
@@ -154,9 +153,9 @@ class JacksCarRental:
         :return: A self.max_cars x self.max_cars array
         """
         policy = np.zeros((self.max_cars, self.max_cars))
-        for a in range(policy.shape[0]):
+        print('Improving Policy...')
+        for a in tqdm(range(policy.shape[0])):
             for b in range(policy.shape[1]):
-                self.print_progress((a, b))
                 best_action = [None, -np.inf]
                 for action in np.arange(-5, 6):
                     if a - action < 0 or b + action < 0:
@@ -172,22 +171,45 @@ class JacksCarRental:
     def run_policy_improvement(self, gamma=0.9, convergence=5.0):
         initial_policy = np.zeros((self.max_cars, self.max_cars), dtype=int)
         policies = [initial_policy]
+        value = None
         while len(policies) < 2 or not np.array_equal(policies[-1], policies[-2]):
             value = self.evaluate_policy(policies[-1], gamma, convergence)
             greedy = self.get_greedy_policy(value)
             policies.append(greedy)
-        return policies
+        return policies, value
 
-    def plot_policies(self, policies):
+    def plot_results(self, policies, value_function):
+        self.plot_value_function(value_function, figure=1)
+        self.plot_policies(policies, starting_fig=2)
+        plt.show()
+
+    def plot_value_function(self, value_function, figure=1):
+        fig = plt.figure(figure)
+        ax = fig.add_subplot(111, projection='3d')
+        x = np.arange(0, self.max_cars)
+        y = np.arange(0, self.max_cars)
+        X, Y = np.meshgrid(x, y)
+        ax.plot_wireframe(X, Y, value_function)
+        fig.suptitle('Optimal Value Function')
+        plt.xlabel('# of Cars at Dealership B')
+        plt.ylabel('# of Cars at Dealership A')
+
+    def plot_policies(self, policies, starting_fig=1):
+        figure = starting_fig
         for i in range(len(policies)):
+            fig = plt.figure(figure)
+            figure += 1
             policy = policies[i]
-            plt.figure(i + 1)
             plt.imshow(policy, cmap='jet')
             plt.ylabel('# of Cars at Dealership A')
             plt.xlabel('# of Cars at Dealership B')
             plt.xticks(np.arange(0, policy.shape[0], 1))
             plt.yticks(np.arange(0, policy.shape[1], 1))
             plt.gca().invert_yaxis()
+            if i == (len(policies) - 1):
+                fig.suptitle('Optimal Policy')
+            else:
+                fig.suptitle(f'Policy {i}')
 
             # Annotate states
             for i in range(policy.shape[0]):
@@ -195,52 +217,3 @@ class JacksCarRental:
                     plt.text(j, i, '%d' % policy[i,j], horizontalalignment='center', verticalalignment='center')
 
             plt.colorbar()
-
-        plt.show()
-
-
-if __name__ == '__main__':
-    MAX_CARS = 21
-    cars = JacksCarRental(max_cars=MAX_CARS)
-
-    policy = np.zeros((MAX_CARS, MAX_CARS), dtype=int)
-    value = cars.evaluate_policy(policy)
-    greedy = cars.get_greedy_policy(value)
-    # cars.plot_policy(greedy)
-
-    value1 = cars.evaluate_policy(greedy.astype(int))
-    greedy2 = cars.get_greedy_policy(value1)
-    # cars.plot_policy(greedy2)
-
-    value2 = cars.evaluate_policy(greedy2.astype(int))
-    greedy3 = cars.get_greedy_policy(value2)
-    # cars.plot_policy(greedy3)
-    cars.plot_policies([greedy, greedy2, greedy3])
-
-    # temp = None
-    # figure_counter = 1
-    # while temp is None or not np.array_equal(policy, temp):
-    #     plt.figure(figure_counter)
-    #     cars.plot_policy(policy)
-    #     figure_counter += 1
-    #
-    #     temp = np.copy(policy)
-    #     value = cars.evaluate_policy(policy.astype(int), convergence=2.0)
-    #     policy = cars.get_greedy_policy(value)
-    # print(value)
-    # print(cars.a_transitions)
-
-    # print(cars.poisson(3, 3))
-    # print(cars.poisson(3, 4))
-    # policy = np.zeros(21*21)
-    # size = 21
-    # for i in range(5):
-    #     for j in range(5):
-    #         policy[i*size + j] = 3
-    # for i in range(10, size):
-    #     for j in range(5, 10):
-    #         policy[i*size + j] = -5
-    # for i in range(7, 9):
-    #     for j in range(1, 3):
-    #         policy[i*size + j] = 5
-    # cars.plot_policy(policy)
