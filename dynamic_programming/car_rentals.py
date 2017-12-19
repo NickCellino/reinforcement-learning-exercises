@@ -50,30 +50,24 @@ class JacksCarRental:
         ret = ((expected**num)/math.factorial(num))*math.exp(-expected)
         return ret
 
-    def get_next_state(self, state, action):
-        a = state[0]
-        b = state[1]
-        return (a - action, b + action)
-
     def get_expected_reward(self, action, current_state):
         moving_car_cost = abs(action) * 2
-        a_cars = current_state[0] - action
-        expected_rental_sales_a = 10 * max(self.EXPECTED_REQUESTS_A, a_cars)
-        b_cars = current_state[1] + action
-        expected_rental_sales_b = 10 * max(self.EXPECTED_REQUESTS_B, b_cars)
+        a_cars = min(max(current_state[0] - action, 0), 20)
+        expected_rental_sales_a = 10 * min(self.EXPECTED_REQUESTS_A, a_cars)
+        b_cars = min(max(current_state[1] + action, 0), 20)
+        expected_rental_sales_b = 10 * min(self.EXPECTED_REQUESTS_B, b_cars)
         return expected_rental_sales_a + expected_rental_sales_b - moving_car_cost
 
-
-    def next_state_probability(self, next, state, action):
-        after_move = (state[0] - action, state[1] + action)
-        required_returns_to_a = next[0] - after_move[0]
-        required_returns_to_b = next[1] - after_move[1]
-        if required_returns_to_a < 0 or required_returns_to_b < 0:
+    def next_state_probability(self, current, next, action):
+        immediate_a = current[0] - action
+        immediate_b = current[1] + action
+        if immediate_a < 0 or immediate_a > 20:
             return 0.0
-        else:
-            a_prob = self.poisson(self.EXPECTED_RETURNS_A, required_returns_to_a)
-            b_prob = self.poisson(self.EXPECTED_RETURNS_B, required_returns_to_b)
-            return a_prob*b_prob
+        elif immediate_b < 0 or immediate_b > 20:
+            return 0.0
+        probability_a = self.a_transitions[immediate_a, next[0]]
+        probability_b = self.b_transitions[immediate_b, next[1]]
+        return probability_a * probability_b
 
     def evaluate_policy(self, policy, gamma=0.9, convergence=1.0):
         """
@@ -93,26 +87,37 @@ class JacksCarRental:
                 action = policy[a, b]
                 next_state_gain_expectation = 0.0
                 for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
-                    immediate_a = max(a - action, 0)
-                    immediate_b = max(b + action, 20)
-                    probability_a_prime = self.a_transitions[immediate_a, a_prime]
-                    probability_b_prime = self.b_transitions[immediate_b, b_prime]
-                    probability_next_state = probability_a_prime * probability_b_prime
+                    probability_next_state = self.next_state_probability((a, b), (a_prime, b_prime), action)
                     immediate_reward = self.get_expected_reward(action, (a, b))
-                    next_state_gain_expectation += probability_next_state * (immediate_reward + gamma*temp[a_prime, b_prime])
+                    next_state_gain_expectation += probability_next_state * (immediate_reward + gamma * temp[a_prime, b_prime])
                 ret[a, b] = next_state_gain_expectation
             diff = np.max(np.fabs(np.subtract(ret, temp)))
             print(diff)
         return ret
 
-    def get_greedy_policy(self, value):
+    def get_greedy_policy(self, value, gamma=0.9):
         """
         Generates a policy that is greedy with respect to the provided value function.
 
         :param value: A 21 x 21 array
         :return: A 21 x 21 array
         """
-        pass
+        policy = np.zeros((21, 21))
+        for a, b in product(range(policy.shape[0]), range(policy.shape[1])):
+            best_action = None
+            best_action_gain = - np.inf
+            print(f'{100*float(a) / policy.shape[0]} %')
+            for action in np.arange(-5, 6):
+                next_state_gain_expectation = 0.0
+                for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
+                    probability_next_state = self.next_state_probability((a, b), (a_prime, b_prime), action)
+                    immediate_reward = self.get_expected_reward(action, (a, b))
+                    next_state_gain_expectation += probability_next_state * (immediate_reward + gamma * value[a_prime, b_prime])
+                if next_state_gain_expectation > best_action_gain:
+                    best_action = action
+                    best_action_gain = next_state_gain_expectation
+            policy[a, b] = best_action
+        return policy
 
     def plot_policy(self, policy):
         plt.figure()
@@ -136,12 +141,12 @@ if __name__ == '__main__':
     cars = JacksCarRental()
     # random_policy = np.random.randint(-5, 6, (21, 21))
     zero_policy = np.zeros((21, 21), dtype=int)
-    value = cars.evaluate_policy(zero_policy)
+    value = cars.evaluate_policy(zero_policy, convergence=2.0)
     next_policy = cars.get_greedy_policy(value)
+    cars.plot_policy(next_policy)
     # print(value)
     # print(cars.a_transitions)
 
-    # print(cars.next_state_probability((5, 5), (6, 6), 0))
     # print(cars.poisson(3, 3))
     # print(cars.poisson(3, 4))
     # policy = np.zeros(21*21)
