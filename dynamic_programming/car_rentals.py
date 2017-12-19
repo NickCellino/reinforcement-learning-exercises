@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-from itertools import product
-
 
 class JacksCarRental:
 
@@ -18,15 +16,23 @@ class JacksCarRental:
     POISSON_CUTOFF = 14
 
     def __init__(self, max_cars=21):
+        """
+        :param max_cars: Non-inclusive upper-bound for how many cars can be at a dealership
+        """
         self.max_cars = max_cars
         self.action_space = np.arange(-5, 6)
         self.a_transitions = self.init_transition_probabilities('A')
         self.b_transitions = self.init_transition_probabilities('B')
         self.a_expected_revenue = self.init_expected_revenue('A')
         self.b_expected_revenue = self.init_expected_revenue('B')
-        # self.expected_rewards = self.init_expected_rewards()
 
     def init_expected_revenue(self, dealership):
+        """
+        Returns a self.max_cars x self.max_cars x len(self.action_space) array.
+        Each cell holds the expected revenue for the specified dealership with
+        the specified previous state, next state, and action.
+        :param dealership: 'A' or 'B'
+        """
         revenue = np.zeros((self.action_space.shape[0], self.max_cars, self.max_cars))
         for cars in range(self.max_cars):
             for cars_after in range(self.max_cars):
@@ -52,17 +58,19 @@ class JacksCarRental:
         return expected_revenue
 
     def init_transition_probabilities(self, dealership):
-        ret = np.zeros((21, 21))
-        for current, next in product(range(ret.shape[0]), range(ret.shape[1])):
-            probability = 0.0
-            for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
-                cars_after_requests = max(current - requests, 0)
-                cars_after_returns = min(cars_after_requests + returns, 20)
-                if cars_after_returns == next:
-                    request_probability = self.expected_requests_probability(dealership, requests)
-                    return_probability = self.expected_returns_probability(dealership, returns)
-                    probability += request_probability * return_probability
-            ret[current, next] = probability
+        ret = np.zeros((self.max_cars, self.max_cars))
+        for current in range(ret.shape[0]):
+            for next in range(ret.shape[1]):
+                probability = 0.0
+                for requests in range(self.POISSON_CUTOFF):
+                    for returns in range(self.POISSON_CUTOFF):
+                        cars_after_requests = max(current - requests, 0)
+                        cars_after_returns = min(cars_after_requests + returns, self.max_cars - 1)
+                        if cars_after_returns == next:
+                            request_probability = self.expected_requests_probability(dealership, requests)
+                            return_probability = self.expected_returns_probability(dealership, returns)
+                            probability += request_probability * return_probability
+                ret[current, next] = probability
         return ret
 
     def expected_returns_probability(self, dealership, returns):
@@ -87,46 +95,17 @@ class JacksCarRental:
 
     def get_expected_reward(self, action, current, next):
         cost = abs(action) * self.MOVING_CAR_COST
-
-        a_cars = current[0] - action
-        if a_cars < 0:
-            raise ValueError("Action causing negative cars at A")
-
-        # expected_sales_a = 0.0
-        # expected_sales_a = self.get_expected_revenue('A', action, current[0], next[0])
         expected_sales_a = self.a_expected_revenue[action, current[0], next[0]]
-        # for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
-        #     cars_after_requests = max(a_cars - requests, 0)
-        #     reward = self.RENTAL_SALE_PRICE * min(a_cars, requests)
-        #     cars_after_returns = min(cars_after_requests + returns, 20)
-        #     if cars_after_returns == next[0]:
-        #         request_probability = self.expected_requests_probability('A', requests)
-        #         return_probability = self.expected_returns_probability('A', returns)
-        #         expected_sales_a += request_probability * return_probability * reward
-
-        b_cars = current[1] + action
-        if b_cars < 0:
-            raise ValueError("Action causing negative cars at B")
-
-        # expected_sales_b = 0.0
         expected_sales_b = self.b_expected_revenue[action, current[1], next[1]]
-        # for requests, returns in product(range(self.POISSON_CUTOFF), range(self.POISSON_CUTOFF)):
-        #     cars_after_requests = max(b_cars - requests, 0)
-        #     reward = self.RENTAL_SALE_PRICE * min(b_cars, requests)
-        #     cars_after_returns = min(cars_after_requests + returns, 20)
-        #     if cars_after_returns == next[1]:
-        #         request_probability = self.expected_requests_probability('B', requests)
-        #         return_probability = self.expected_returns_probability('B', returns)
-        #         expected_sales_b += request_probability * return_probability * reward
 
         return expected_sales_a + expected_sales_b - cost
 
     def next_state_probability(self, current, next, action):
         immediate_a = current[0] - action
         immediate_b = current[1] + action
-        if immediate_a < 0 or immediate_a > 20:
+        if immediate_a < 0 or immediate_a > (self.max_cars - 1):
             return 0.0
-        elif immediate_b < 0 or immediate_b > 20:
+        elif immediate_b < 0 or immediate_b > (self.max_cars - 1):
             return 0.0
         probability_a = self.a_transitions[immediate_a, next[0]]
         probability_b = self.b_transitions[immediate_b, next[1]]
@@ -135,11 +114,11 @@ class JacksCarRental:
     def expected_return(self, state, action, state_value, gamma):
         (a, b) = state
         next_state_gain_expectation = 0.0
-        for a_prime, b_prime in product(range(policy.shape[0]), range(policy.shape[1])):
-            probability_next_state = self.next_state_probability((a, b), (a_prime, b_prime), action)
-            immediate_reward = self.get_expected_reward(action, (a, b), (a_prime, b_prime))
-            # immediate_reward = self.expected_rewards[action, a, b, a_prime, b_prime]
-            next_state_gain_expectation += probability_next_state * (immediate_reward + gamma * state_value[a_prime, b_prime])
+        for a_prime in range(self.max_cars):
+            for b_prime in range(self.max_cars):
+                probability_next_state = self.next_state_probability((a, b), (a_prime, b_prime), action)
+                immediate_reward = self.get_expected_reward(action, (a, b), (a_prime, b_prime))
+                next_state_gain_expectation += probability_next_state * (immediate_reward + gamma * state_value[a_prime, b_prime])
         return next_state_gain_expectation
 
     def evaluate_policy(self, policy, gamma=0.9, convergence=1.0):
@@ -152,70 +131,88 @@ class JacksCarRental:
         :param policy: A 21 x 21 array
         :return: A 21 x 21  array
         """
-        ret = np.zeros((21, 21))
+        ret = np.zeros((self.max_cars, self.max_cars))
         diff = np.inf
         while diff > convergence:
             temp = np.copy(ret)
-            for a, b in product(range(policy.shape[0]), range(policy.shape[1])):
-                ret[a, b] = self.expected_return((a, b), policy[a, b], temp, gamma)
+            for a in range(policy.shape[0]):
+                for b in range(policy.shape[1]):
+                    ret[a, b] = self.expected_return((a, b), policy[a, b], temp, gamma)
             diff = np.max(np.fabs(np.subtract(ret, temp)))
             print(diff)
         return ret
 
     def print_progress(self, state):
-        progress = (state[0] + (state[1] / 21.0)) / 21
-        print(f'{100 * progress}%')
+        progress = (state[0] + (state[1] / self.max_cars)) / self.max_cars
+        print('%.2f' % (100 * progress))
 
     def get_greedy_policy(self, value, gamma=0.9):
         """
         Generates a policy that is greedy with respect to the provided value function.
 
-        :param value: A 21 x 21 array
-        :return: A 21 x 21 array
+        :param value: A self.max_cars x self.max_cars array
+        :return: A self.max_cars x self.max_cars array
         """
-        policy = np.zeros((21, 21))
-        for a, b in product(range(policy.shape[0]), range(policy.shape[1])):
-            best_action = None
-            best_action_gain = - np.inf
-            self.print_progress((a, b))
-            for action in np.arange(-5, 6):
-                if a - action < 0 or b + action < 0:
-                    # This action is not allowed if it makes one dealership have less than 0 cars
-                    continue
-                next_state_gain_expectation = self.expected_return((a, b), action, value, gamma)
-                if next_state_gain_expectation > best_action_gain:
-                    best_action = action
-                    best_action_gain = next_state_gain_expectation
-            policy[a, b] = best_action
+        policy = np.zeros((self.max_cars, self.max_cars))
+        for a in range(policy.shape[0]):
+            for b in range(policy.shape[1]):
+                self.print_progress((a, b))
+                best_action = [None, -np.inf]
+                for action in np.arange(-5, 6):
+                    if a - action < 0 or b + action < 0:
+                        # This action is not allowed if it makes one dealership have less than 0 cars
+                        continue
+                    next_state_gain_expectation = self.expected_return((a, b), action, value, gamma)
+                    if next_state_gain_expectation > best_action[1]:
+                        best_action[0] = action
+                policy[a, b] = best_action
         return policy
 
-    def plot_policy(self, policy):
-        plt.imshow(policy, cmap='jet')
-        plt.ylabel('# of Cars at Dealership A')
-        plt.xlabel('# of Cars at Dealership B')
-        plt.xticks(np.arange(0, policy.shape[0], 1))
-        plt.yticks(np.arange(0, policy.shape[1], 1))
-        plt.gca().invert_yaxis()
+    def plot_policies(self, policies):
+        for i in range(len(policies)):
+            policy = policies[i]
+            plt.figure(i + 1)
+            plt.imshow(policy, cmap='jet')
+            plt.ylabel('# of Cars at Dealership A')
+            plt.xlabel('# of Cars at Dealership B')
+            plt.xticks(np.arange(0, policy.shape[0], 1))
+            plt.yticks(np.arange(0, policy.shape[1], 1))
+            plt.gca().invert_yaxis()
 
-        # Annotate states
-        for i in range(policy.shape[0]):
-            for j in range(policy.shape[1]):
-                plt.text(j, i, '%d' % policy[i,j], horizontalalignment='center', verticalalignment='center')
+            # Annotate states
+            for i in range(policy.shape[0]):
+                for j in range(policy.shape[1]):
+                    plt.text(j, i, '%d' % policy[i,j], horizontalalignment='center', verticalalignment='center')
 
-        plt.colorbar()
+            plt.colorbar()
+
         plt.show()
 
+    def show_plots(self):
+        pass
 
 if __name__ == '__main__':
-    cars = JacksCarRental()
-    policy = np.zeros((21, 21), dtype=int)
-    value = cars.evaluate_policy(policy)
-    greedy = cars.get_greedy_policy(value)
-    cars.plot_policy(greedy)
+    MAX_CARS = 21
+    cars = JacksCarRental(max_cars=MAX_CARS)
+    policies = []
+    policies.append(np.zeros((MAX_CARS, MAX_CARS), dtype=int))
+    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
+    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
+    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
+    policies.append(np.random.randint(-5, 6, (MAX_CARS, MAX_CARS)))
+    cars.plot_policies(policies)
 
-    value1 = cars.evaluate_policy(greedy.astype(int))
-    greedy2 = cars.get_greedy_policy(value1)
-    cars.plot_policy(greedy2)
+    # value = cars.evaluate_policy(policy)
+    # greedy = cars.get_greedy_policy(value)
+    # cars.plot_policy(greedy)
+    #
+    # value1 = cars.evaluate_policy(greedy.astype(int))
+    # greedy2 = cars.get_greedy_policy(value1)
+    # cars.plot_policy(greedy2)
+    #
+    # value2 = cars.evaluate_policy(greedy2.astype(int))
+    # greedy3 = cars.get_greedy_policy(value2)
+    # cars.plot_policy(greedy3)
 
     # temp = None
     # figure_counter = 1
