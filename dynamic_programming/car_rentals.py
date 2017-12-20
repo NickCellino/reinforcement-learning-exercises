@@ -134,8 +134,8 @@ class JacksCarRental:
         state, which is the number of cars at location A and the number
         of cars at location B, where each ranges from 0 to 20.
 
-        :param policy: A 21 x 21 array
-        :return: A 21 x 21  array
+        :param policy: A self.max_cars x self.max_cars array
+        :return: A self.max_cars x self.max_cars  array
         """
         ret = np.zeros((self.max_cars, self.max_cars))
         diff = np.inf
