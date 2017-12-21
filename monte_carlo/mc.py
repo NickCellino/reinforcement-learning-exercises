@@ -3,13 +3,13 @@ from tqdm import tqdm
 
 class MonteCarlo:
 
-    def fv_policy_evaluation(self, environment, policy, episodes=10000):
+    @staticmethod
+    def fv_policy_evaluation(environment, policy, episodes=10000):
         """
         First visit MC policy evaluation
 
         :param environment:
             environment.num_states(): Returns the number of states in the environment
-            environment.num_actions(): Returns the number of actions in the environment
             environment.get_random_state(): Returns a random state
             environment.perform_action(a): Returns a reward and the next state (r, s')
             environment.is_terminal(s): Returns whether a state is terminal or not
@@ -29,10 +29,13 @@ class MonteCarlo:
 
                 # Perform our action
                 a = policy.get_action(s)
-                (r, s_prime) = environment.perform_action(a)
+                (r, s_prime) = environment.perform_action(s, a)
 
                 # Update our gain counters
                 states_seen = {state: gain + r for state, gain in states_seen.items()}
+
+                # Update current state
+                s = s_prime
             for state, gain in states_seen.items():
                 V[state] = V[state] + (1.0/(episode+1))*(gain - V[state])
 
