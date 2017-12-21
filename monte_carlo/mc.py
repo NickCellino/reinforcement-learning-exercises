@@ -18,6 +18,7 @@ class MonteCarlo:
         :return: A value function
         """
         V = np.zeros(environment.num_states())
+        N = np.zeros(environment.num_states())
 
         for episode in tqdm(range(episodes)):
             s = environment.get_random_state()
@@ -37,6 +38,7 @@ class MonteCarlo:
                 # Update current state
                 s = s_prime
             for state, gain in states_seen.items():
-                V[state] = V[state] + (1.0/(episode+1))*(gain - V[state])
+                N[state] = N[state] + 1
+                V[state] = V[state] + (1.0/(N[state]))*(gain - V[state])
 
         return V

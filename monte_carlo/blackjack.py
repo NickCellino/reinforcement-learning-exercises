@@ -1,4 +1,22 @@
 from random import randint
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
+class BlackjackPlotter:
+
+    @staticmethod
+    def plot_value_function(value_function, title='Value Function', figure=1):
+        fig = plt.figure(figure)
+        ax = fig.add_subplot(111, projection='3d')
+        x = np.arange(12, 22)
+        y = np.arange(1, 11)
+        X, Y = np.meshgrid(x, y)
+        ax.plot_wireframe(X, Y, value_function)
+        fig.suptitle(title)
+        plt.xlabel('Player sum')
+        plt.ylabel('Dealer showing')
 
 
 class BlackjackStates:
@@ -11,6 +29,12 @@ class BlackjackStates:
         for agent_sum in AGENT_SUMS:
             for _usable_ace in USABLE_ACE:
                 STATES.append((dealer_card, agent_sum, _usable_ace))
+
+    @staticmethod
+    def value_function_shape():
+        return (len(BlackjackStates.DEALER_CARDS),
+                len(BlackjackStates.AGENT_SUMS),
+                len(BlackjackStates.USABLE_ACE))
 
     @staticmethod
     def num_states():
@@ -36,7 +60,7 @@ class BlackjackStates:
 
 class BlackjackPolicy:
 
-    def _get_action_by_state(self, id):
+    def _get_action_by_state(self, state):
         raise NotImplementedError('This must be implemented.')
 
     def get_action(self, state_id):
@@ -136,7 +160,7 @@ class Blackjack:
 
             blackjack = False
             if player_sum == 21 and usable_ace:
-                print(f'You have a blackjack!')
+                self.debug_print(f'You have a blackjack!')
                 blackjack = True
 
             # Dealer must hit until he has over 17
@@ -148,7 +172,7 @@ class Blackjack:
                 if dealer_sum != 21 and blackjack:
                     # If dealer doesn't have 21 after first draw,
                     # player immediately wins.
-                    print(f'You win!')
+                    self.debug_print(f'You win!')
                     return (1, self.GAME_OVER_STATE)
 
             if dealer_sum > 21:
