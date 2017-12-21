@@ -1,11 +1,11 @@
-from monte_carlo.blackjack import Blackjack
+from monte_carlo.blackjack import *
 
 blackjack = Blackjack()
 state = blackjack.get_random_state()
 
-
 while not blackjack.is_terminal(state):
-    (dealer_card, player_sum, usable_ace) = blackjack._id_to_state(state)
+    (dealer_card, player_sum, usable_ace) = BlackjackStates.id_to_state(state)
+
     if usable_ace:
         ace_string = 'with ace'
     else:

@@ -1,17 +1,48 @@
 from random import randint
 
 
-# class BlackjackStates:
-#
-#     dealer_cards = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10]
-#
-#
-# class BlackjackPolicy:
-#
-#     def _id_to_state(self, state_id):
-#
-#     def get_action(self, state):
-#         pass
+class BlackjackStates:
+
+    DEALER_CARDS = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    AGENT_SUMS = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+    USABLE_ACE = [True, False]
+    STATES = []
+    for dealer_card in DEALER_CARDS:
+        for agent_sum in AGENT_SUMS:
+            for _usable_ace in USABLE_ACE:
+                STATES.append((dealer_card, agent_sum, _usable_ace))
+
+    @staticmethod
+    def num_states():
+        return (len(BlackjackStates.DEALER_CARDS) *
+                len(BlackjackStates.AGENT_SUMS) *
+                len(BlackjackStates.USABLE_ACE))
+
+    @staticmethod
+    def id_to_state(id):
+        return BlackjackStates.STATES[id]
+
+    @staticmethod
+    def state_to_id(state):
+        dealer_card_index = BlackjackStates.DEALER_CARDS.index(state[0])
+        agent_sum_index = BlackjackStates.AGENT_SUMS.index(state[1])
+        usable_ace_index = BlackjackStates.USABLE_ACE.index(state[2])
+        return (
+            dealer_card_index * len(BlackjackStates.AGENT_SUMS) * len(BlackjackStates.USABLE_ACE) +
+            agent_sum_index * len(BlackjackStates.USABLE_ACE) +
+            usable_ace_index
+        )
+
+
+class BlackjackPolicy:
+
+    def _get_action_by_state(self, id):
+        raise NotImplementedError('This must be implemented.')
+
+    def get_action(self, state_id):
+        blackjack_state = BlackjackStates.id_to_state(state_id)
+        return self._get_action_by_state(blackjack_state)
+
 
 class Blackjack:
 
@@ -21,28 +52,8 @@ class Blackjack:
     HIT_CARDS = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
 
     def __init__(self, verbose=True):
-        self._dealer_cards = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self._agent_sums = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-        self._usable_ace = [True, False]
         self._states = []
         self._verbose = verbose
-        for dealer_card in self._dealer_cards:
-            for agent_sum in self._agent_sums:
-                for usable_ace in self._usable_ace:
-                    self._states.append((dealer_card, agent_sum, usable_ace))
-
-    def _id_to_state(self, id):
-        return self._states[id]
-
-    def _state_to_id(self, state):
-        dealer_card_index = self._dealer_cards.index(state[0])
-        agent_sum_index = self._agent_sums.index(state[1])
-        usable_ace_index = self._usable_ace.index(state[2])
-        return (
-            dealer_card_index*len(self._agent_sums)*len(self._usable_ace) +
-            agent_sum_index*len(self._usable_ace) +
-            usable_ace_index
-        )
 
     def _blackjack_sum(self, hand):
         """
@@ -88,13 +99,13 @@ class Blackjack:
             print(message)
 
     def num_states(self):
-        return len(self._dealer_cards) * len(self._agent_sums) * len(self._usable_ace)
+        return BlackjackStates.num_states()
 
     def get_random_state(self):
         return randint(0, self.num_states() - 1)
 
     def perform_action(self, state_id, action):
-        state = self._id_to_state(state_id)
+        state = BlackjackStates.id_to_state(state_id)
         dealer_card = state[0]
         player_sum = state[1]
         usable_ace = state[2]
@@ -108,42 +119,53 @@ class Blackjack:
                     # Ace becomes 1
                     player_sum -= 10
                     next_state = (dealer_card, player_sum, False)
-                    return (0, self._state_to_id(next_state))
+                    return (0, BlackjackStates.state_to_id(next_state))
                 else:
                     # Lose
-                    debug_print(f'You busted.')
+                    self.debug_print(f'You busted with {player_sum}.')
                     return (-1, self.GAME_OVER_STATE)
             else:
                 # Still <= 21
                 next_state = (dealer_card, player_sum, usable_ace)
-                return (0, self._state_to_id(next_state))
+                return (0, BlackjackStates.state_to_id(next_state))
         elif action == self.STAY_ACTION:
             self.debug_print(f'You stayed!')
             # Dealer's turn
             dealer_cards = [dealer_card]
             dealer_sum = self._blackjack_sum(dealer_cards)
 
+            blackjack = False
+            if player_sum == 21 and usable_ace:
+                print(f'You have a blackjack!')
+                blackjack = True
+
             # Dealer must hit until he has over 17
             while dealer_sum < 17:
                 card = self._draw_card()
-                self.debug_print(f'Dealer drew {card}')
+                self.debug_print(f'Dealer had {dealer_sum}, and drew {card}')
                 dealer_cards.append(card)
                 dealer_sum = self._blackjack_sum(dealer_cards)
-                print(f'Dealer has {dealer_sum}')
+                if dealer_sum != 21 and blackjack:
+                    # If dealer doesn't have 21 after first draw,
+                    # player immediately wins.
+                    print(f'You win!')
+                    return (1, self.GAME_OVER_STATE)
 
             if dealer_sum > 21:
                 # Dealer busted
                 self.debug_print(f'Dealer busted.')
                 return (1, self.GAME_OVER_STATE)
             else:
-                if dealer_sum >= player_sum:
+                if dealer_sum > player_sum:
                     # Lose
                     self.debug_print(f'Dealer won with {dealer_sum}.')
                     return (-1, self.GAME_OVER_STATE)
+                elif dealer_sum == player_sum:
+                    self.debug_print(f'Draw. Dealer and player both have {player_sum}.')
+                    return (0, self.GAME_OVER_STATE)
                 else:
                     # Win
-                    self.debug_print(f'Dealer: {dealer_sum}. You: {player_sum}.')
-                    self.debug_print(f'You won.')
+                    self.debug_print(f'You won! Dealer: {dealer_sum}. You: {player_sum}.')
                     return (1, self.GAME_OVER_STATE)
         else:
             raise ValueError('This is not a valid action.')
