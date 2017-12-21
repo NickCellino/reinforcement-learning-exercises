@@ -4,6 +4,8 @@ This repository contains exercises from [Reinforcement Learning: An Introduction
 Each subdirectory in this project contains an overview of a topic covered
 in the book, the results from the exercises, and Python code for the exercises.
 
+This is a work in progress.
+
 ## Topics
 
 1. [Chapter 2 - Bandit Problems](./bandit_problems)
