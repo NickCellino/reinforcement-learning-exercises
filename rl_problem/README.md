@@ -93,3 +93,6 @@ that, we can derive the optimal policy. Here is the optimal value function
 for gridworld, solved using value iteration.
 
 ![Optimal Value Function](./results/optimal.png)
+
+#### Sources:
+1. Sutton, Richard S., and Andrew G. Barto. Reinforcement Learning: an Introduction. 2nd ed., The MIT Press, 2012.

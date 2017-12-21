@@ -222,6 +222,7 @@ class JacksCarRental:
 
             plt.colorbar()
 
+
 class JacksCarRentalWithHelp(JacksCarRental):
 
     SECOND_PARKING_LOT_COST = 4

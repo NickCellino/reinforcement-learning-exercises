@@ -1,6 +1,5 @@
 # Chapter 2 - Bandit Problems
 
-## Overview
 In this chapter, we learn about the N-Armed-Bandit problem. Consider this problem:
 
 There are 10 different slot machines. For each slot machine, you pull a lever and
@@ -129,3 +128,6 @@ So which bandit performed the best?
 The quantity we are trying to maximize is total rewards which is represented
 graphically as the area under the curve. In this experiment, the strategy
 in which we decrease epsilon over time performed the best.
+
+#### Sources:
+1. Sutton, Richard S., and Andrew G. Barto. Reinforcement Learning: an Introduction. 2nd ed., The MIT Press, 2012.
