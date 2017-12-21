@@ -73,8 +73,6 @@ cars are at each dealership. The actions are how many cars we move from A to B (
 B to A). So the actions are integers in the range \[-5, 5\]. The rewards are how much money Jack makes in each time step.
 The book says to use a discount factor of 0.9, so that's what we'll do.
 
-From all the iterations of running policy iteration, starting with the policy that moves 0 cars no matter what,
-these are what I have come up with (the last one is optimal):
 Here are my results for running policy iteration on this problem:
 
 ![Policy 0](./results/jack_policy_0.png)
