@@ -127,7 +127,10 @@ So which bandit performed the best?
 
 The quantity we are trying to maximize is total rewards which is represented
 graphically as the area under the curve. In this experiment, the strategy
-in which we decrease epsilon over time performed the best.
+in which we decrease epsilon over time performed the best. One interesting
+thing that we can see here is that, although the softmax agent generally chooses the optimal
+action less than the epsilon greedy agent, it performs about the same because it chooses
+"okay" actions much more than it chooses the really bad actions.
 
 #### Sources:
 1. Sutton, Richard S., and Andrew G. Barto. Reinforcement Learning: an Introduction. 2nd ed., The MIT Press, 2012.
