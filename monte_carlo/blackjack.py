@@ -71,7 +71,7 @@ class BlackjackPlotter:
 class BlackjackStates:
 
     DEALER_CARDS = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    AGENT_SUMS = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+    AGENT_SUMS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
     USABLE_ACE = [True, False]
     STATES = []
     for dealer_card in DEALER_CARDS:

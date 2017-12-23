@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Q Eva
 parser.add_argument('--iterations',
                     type=int,
                     help='Number of iterations to run',
-                    default=1)
+                    default=5000000)
 parser.add_argument('--verbose',
                     type=bool,
                     help='Print (a lot of) log messages',
