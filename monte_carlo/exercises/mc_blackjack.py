@@ -1,7 +1,6 @@
-import matplotlib.pyplot as plt
-from monte_carlo.blackjack import *
-from monte_carlo.blackjack_policies import *
-from monte_carlo.mc import MonteCarlo
+from monte_carlo.blackjack import Blackjack, BlackjackPlotter
+from monte_carlo.blackjack_policies import BlackjackPolicy
+from monte_carlo import mc
 import argparse
 
 
@@ -21,5 +20,5 @@ args = parser.parse_args()
 blackjack = Blackjack(verbose=args.verbose)
 policy = BlackjackPolicy.generate_policy(stay_on=[20, 21])
 
-value = MonteCarlo.fv_policy_evaluation(blackjack, policy, episodes=args.episodes)
+value = mc.fv_policy_evaluation(blackjack, policy, episodes=args.episodes)
 BlackjackPlotter.plot_value_functions(value)

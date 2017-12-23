@@ -1,6 +1,6 @@
 from monte_carlo.blackjack import Blackjack
-from monte_carlo.blackjack_policies import *
-from monte_carlo.mc import MonteCarlo
+from monte_carlo import mc
+import numpy as np
 import argparse
 
 
@@ -20,6 +20,4 @@ args = parser.parse_args()
 blackjack = Blackjack(verbose=args.verbose)
 
 policy = np.zeros(blackjack.num_states())
-Q = MonteCarlo.fv_policy_q_evaluation(blackjack, policy, episodes=args.episodes)
-
-print(Q)
+Q = mc.fv_policy_q_evaluation(blackjack, policy, episodes=args.episodes)

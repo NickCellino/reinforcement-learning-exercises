@@ -60,7 +60,6 @@ class BlackjackPlotter:
 
         for i in range(policy.shape[0]):
             for j in range(policy.shape[1]):
-                label = ''
                 if policy[i, j] == Blackjack.HIT_ACTION:
                     label = 'HIT'
                 else:

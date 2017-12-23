@@ -1,6 +1,5 @@
-from monte_carlo.blackjack import Blackjack
-from monte_carlo.blackjack_policies import *
-from monte_carlo.mc import MonteCarlo
+from monte_carlo.blackjack import Blackjack, BlackjackStates, BlackjackPlotter
+from monte_carlo import mc
 import argparse
 
 
@@ -18,7 +17,7 @@ args = parser.parse_args()
 
 
 blackjack = Blackjack(verbose=args.verbose)
-optimal_policy, Q = MonteCarlo.policy_improvement(blackjack, iterations=args.iterations)
+optimal_policy, Q = mc.policy_improvement(blackjack, iterations=args.iterations)
 
 if args.verbose:
     for state_id in range(optimal_policy.shape[0]):
