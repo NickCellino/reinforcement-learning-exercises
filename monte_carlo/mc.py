@@ -22,16 +22,60 @@ class MonteCarlo:
 
 
     @staticmethod
-    def policy_improvement(environment, episodes=10000):
-        previous_policy = None
+    def policy_improvement(environment, iterations=100000):
         policy = np.zeros(environment.num_states(), dtype=int)
-        Q = None
-        while previous_policy is None or not np.array_equal(previous_policy, policy):
-            previous_policy = policy
-            Q = MonteCarlo.fv_policy_q_evaluation(environment, policy, episodes)
+        Q = np.zeros((environment.num_states(), environment.num_actions()))
+        N = np.zeros((environment.num_states(), environment.num_actions()))
+        for i in tqdm(range(iterations)):
+
+            states_seen = MonteCarlo.one_episode_state_action_values(environment, policy, random_start=True)
+
+            for state, actions_performed in states_seen.items():
+                for action, gain in actions_performed.items():
+                    N[state, action] = N[state, action] + 1
+                    Q[state, action] = Q[state, action] + (1.0/(N[state, action]))*(gain - Q[state, action])
+
             policy = PolicyImprovement.get_greedy_policy(Q)
-            print(policy)
+
         return policy, Q
+
+
+    @staticmethod
+    def one_episode_state_action_values(environment, policy, random_start=True):
+        s = environment.get_random_state()
+        states_seen = {}
+        first_action = True
+        while not environment.is_terminal(s):
+            # If this is the first time we've seen this state
+            if states_seen.get(s, None) is None:
+                states_seen[s] = {}
+
+            if first_action and random_start:
+                a = np.random.randint(0, environment.num_actions())
+                first_action = False
+            else:
+                # Perform our action
+                a = policy[s]
+
+            # If this is the first time we've performed this action
+            # in this state
+            if states_seen[s].get(a, None) is None:
+                states_seen[s][a] = 0
+
+            (r, s_prime) = environment.perform_action(s, a)
+
+            # Update our gain counters
+            states_seen = \
+                {
+                    state: {action: gain + r for action, gain in actions_performed.items()}
+                    for state, actions_performed
+                    in states_seen.items()
+                    }
+
+            # Update current state
+            s = s_prime
+
+        return states_seen
 
 
     @staticmethod
@@ -45,38 +89,7 @@ class MonteCarlo:
         N = np.zeros((environment.num_states(), environment.num_actions()))
 
         for episode in tqdm(range(episodes)):
-            s = environment.get_random_state()
-            states_seen = {}
-            first_action = True
-            while not environment.is_terminal(s):
-                # If this is the first time we've seen this state
-                if states_seen.get(s, None) is None:
-                    states_seen[s] = {}
-
-                if first_action:
-                    a = np.random.randint(0, environment.num_actions())
-                    first_action = False
-                else:
-                    # Perform our action
-                    a = policy[s]
-
-                # If this is the first time we've performed this action
-                # in this state
-                if states_seen[s].get(a, None) is None:
-                    states_seen[s][a] = 0
-
-                (r, s_prime) = environment.perform_action(s, a)
-
-                # Update our gain counters
-                states_seen = \
-                    {
-                        state: {action: gain + r for action, gain in actions_performed.items()}
-                        for state, actions_performed
-                        in states_seen.items()
-                    }
-
-                # Update current state
-                s = s_prime
+            states_seen = MonteCarlo.one_episode_state_action_values(environment, policy, random_start=True)
             for state, actions_performed in states_seen.items():
                 for action, gain in actions_performed.items():
                     N[state, action] = N[state, action] + 1

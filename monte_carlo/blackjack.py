@@ -8,7 +8,7 @@ class BlackjackPlotter:
 
     @staticmethod
     def plot_value_functions(value):
-        reshaped_value = np.reshape(value, BlackjackStates.value_function_shape())
+        reshaped_value = np.reshape(value, BlackjackStates.state_space_shape())
         BlackjackPlotter.plot_value_function(
             reshaped_value[:, :, 0],
             title='Value Function (Usable ace)',
@@ -32,6 +32,41 @@ class BlackjackPlotter:
         plt.xlabel('Player sum')
         plt.ylabel('Dealer showing')
 
+    @staticmethod
+    def plot_policies(policies):
+        reshaped_policy = policies.reshape(BlackjackStates.state_space_shape())
+        ace_policy = reshaped_policy[:, :, 0]
+        BlackjackPlotter.plot_policy(ace_policy, title='Ace policy', figure=1)
+        no_ace_policy = reshaped_policy[:, :, 1]
+        BlackjackPlotter.plot_policy(no_ace_policy, title='No ace policy', figure=2)
+        plt.show()
+
+    @staticmethod
+    def plot_policy(policy, title='Blackjack Policy', figure=1):
+        policy = np.transpose(policy)
+        fig = plt.figure(figure)
+        ax = fig.subplots()
+        fig.suptitle(title)
+        plt.imshow(policy, cmap='jet')
+        plt.gca().invert_yaxis()
+
+        plt.xlabel('Dealer showing')
+        plt.xticks(np.arange(0, len(BlackjackStates.DEALER_CARDS), 1))
+        ax.set_xticklabels(BlackjackStates.DEALER_CARDS)
+
+        plt.ylabel('Agent sum')
+        plt.yticks(np.arange(0, len(BlackjackStates.AGENT_SUMS), 1))
+        ax.set_yticklabels(BlackjackStates.AGENT_SUMS)
+
+        for i in range(policy.shape[0]):
+            for j in range(policy.shape[1]):
+                label = ''
+                if policy[i, j] == Blackjack.HIT_ACTION:
+                    label = 'HIT'
+                else:
+                    label = 'STAY'
+                plt.text(j, i, f'{label}', horizontalalignment='center', verticalalignment='center')
+
 
 class BlackjackStates:
 
@@ -45,7 +80,7 @@ class BlackjackStates:
                 STATES.append((dealer_card, agent_sum, _usable_ace))
 
     @staticmethod
-    def value_function_shape():
+    def state_space_shape():
         return (len(BlackjackStates.DEALER_CARDS),
                 len(BlackjackStates.AGENT_SUMS),
                 len(BlackjackStates.USABLE_ACE))

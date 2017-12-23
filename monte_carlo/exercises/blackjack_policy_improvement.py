@@ -6,9 +6,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Q Evaluation')
 
-parser.add_argument('--episodes',
+parser.add_argument('--iterations',
                     type=int,
-                    help='Number of episodes to train over',
+                    help='Number of iterations to run',
                     default=1)
 parser.add_argument('--verbose',
                     type=bool,
@@ -18,6 +18,15 @@ args = parser.parse_args()
 
 
 blackjack = Blackjack(verbose=args.verbose)
-optimal_policy, Q = MonteCarlo.policy_improvement(blackjack, episodes=args.episodes)
+optimal_policy, Q = MonteCarlo.policy_improvement(blackjack, iterations=args.iterations)
 
-print(optimal_policy)
+if args.verbose:
+    for state_id in range(optimal_policy.shape[0]):
+        print('--------------------------------')
+        BlackjackStates.print_state(state_id)
+        if (optimal_policy[state_id] == Blackjack.HIT_ACTION):
+            print('HIT')
+        else:
+            print('STAY')
+
+BlackjackPlotter.plot_policies(optimal_policy)
