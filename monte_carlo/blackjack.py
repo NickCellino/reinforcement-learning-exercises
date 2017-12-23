@@ -7,6 +7,20 @@ from mpl_toolkits.mplot3d import Axes3D
 class BlackjackPlotter:
 
     @staticmethod
+    def plot_value_functions(value):
+        reshaped_value = np.reshape(value, BlackjackStates.value_function_shape())
+        BlackjackPlotter.plot_value_function(
+            reshaped_value[:, :, 0],
+            title='Value Function (Usable ace)',
+            figure=1
+        )
+        BlackjackPlotter.plot_value_function(
+            reshaped_value[:, :, 1],
+            title='Value Function (No usable ace)',
+            figure=2)
+        plt.show()
+
+    @staticmethod
     def plot_value_function(value_function, title='Value Function', figure=1):
         fig = plt.figure(figure)
         ax = fig.add_subplot(111, projection='3d')
@@ -57,15 +71,14 @@ class BlackjackStates:
             usable_ace_index
         )
 
-
-class BlackjackPolicy:
-
-    def _get_action_by_state(self, state):
-        raise NotImplementedError('This must be implemented.')
-
-    def get_action(self, state_id):
-        blackjack_state = BlackjackStates.id_to_state(state_id)
-        return self._get_action_by_state(blackjack_state)
+    @staticmethod
+    def print_state(state):
+        if type(state) is int:
+            state = BlackjackStates.id_to_state(state)
+        dealer_card = state[0]
+        agent_sum = state[1]
+        usable_ace = state[2]
+        print(f'Dealer: {dealer_card}, Agent sum: {agent_sum}, Ace: {usable_ace}')
 
 
 class Blackjack:
@@ -124,6 +137,9 @@ class Blackjack:
 
     def num_states(self):
         return BlackjackStates.num_states()
+
+    def num_actions(self):
+        return 2
 
     def get_random_state(self):
         return randint(0, self.num_states() - 1)
