@@ -1,4 +1,9 @@
-matplotlib
-numpy
-tqdm
-
+cycler==0.10.0
+matplotlib==2.1.1
+numpy==1.13.3
+pygame==1.9.3
+pyparsing==2.2.0
+python-dateutil==2.6.1
+pytz==2017.3
+six==1.11.0
+tqdm==4.19.5
