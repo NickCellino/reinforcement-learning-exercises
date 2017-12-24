@@ -28,14 +28,28 @@ class RaceTrack:
                 self.track.append(new_row)
                 row_num += 1
         self.current_speed = [0, 0]
+        self.car_location = [0, 0]
 
         # Init car
-        self.car_location = self.start_locations[random.randint(0, len(self.start_locations) - 1)]
+        self.restart_car()
 
     def perform_action(self, action):
         self.current_speed[0] = max(min(self.current_speed[0] + action[0], 4), 0)
         self.current_speed[1] = max(min(self.current_speed[1] + action[1], 4), 0)
         self.adjust_car_position()
+        if self.out_of_bounds():
+            self.restart_car()
+
+    def out_of_bounds(self):
+        return (self.car_location[0] < 0 or self.car_location[0] >= self.dimensions[0] or
+                self.car_location[1] < 0 or self.car_location[1] >= self.dimensions[1] or
+                self.track[self.car_location[1]][self.car_location[0]] == self.OOB)
+
+    def restart_car(self):
+        random_start = self.start_locations[random.randint(0, len(self.start_locations) - 1)]
+        self.car_location[0] = random_start[0]
+        self.car_location[1] = random_start[1]
+        self.current_speed = [0, 0]
 
     def adjust_car_position(self):
         self.car_location[0] += self.current_speed[0]
@@ -57,6 +71,7 @@ class RaceTrackGame:
     START_COLOR = (2, 234, 72)
     CAR_COLOR = (0, 0, 0)
     BACKGROUND_COLOR = (0, 50, 50)
+    CELL_BORDER = 2
 
     FONT_SIZE = 30
     FONT_HEIGHT = 30
@@ -149,7 +164,7 @@ class RaceTrackGame:
 
         draw_position = self.get_track_pixel_pos(col, row)
 
-        pygame.draw.rect(self.screen, color, (draw_position[0], draw_position[1], self.cell_size[0], self.cell_size[1]))
+        pygame.draw.rect(self.screen, color, (draw_position[0], draw_position[1], self.cell_size[0] - self.CELL_BORDER, self.cell_size[1] - self.CELL_BORDER))
 
     def update(self):
         pass
