@@ -8,27 +8,38 @@ class RaceTrack:
     TRACK = 1
     FINISH = 2
     START = 3
+    CAR = 4
 
     def __init__(self, csv_path):
         self.track = []
         self.start_locations = []
         with open(csv_path, 'r') as csvfile:
             track_layout = csv.reader(csvfile, delimiter=',')
+            row_num = 0
             for row in track_layout:
                 new_row = []
+                col_num = 0
                 for cell in row:
                     new_cell = int(cell)
                     if new_cell == RaceTrack.START:
-                        self.start_locations.append(new_cell)
+                        self.start_locations.append([col_num, row_num])
                     new_row.append(new_cell)
+                    col_num += 1
                 self.track.append(new_row)
+                row_num += 1
+        self.current_speed = [0, 0]
 
         # Init car
         self.car_location = self.start_locations[random.randint(0, len(self.start_locations) - 1)]
 
     def perform_action(self, action):
-        print(f'Vertical speed: {action[0]}')
-        print(f'Horizontal speed: {action[1]}')
+        self.current_speed[0] = max(min(self.current_speed[0] + action[0], 4), 0)
+        self.current_speed[1] = max(min(self.current_speed[1] + action[1], 4), 0)
+        self.adjust_car_position()
+
+    def adjust_car_position(self):
+        self.car_location[0] += self.current_speed[0]
+        self.car_location[1] -= self.current_speed[1]
 
     @property
     def dimensions(self):
@@ -86,30 +97,43 @@ class RaceTrackGame:
     def update_current_action(self):
         # Forward
         if self.keys[pygame.K_i]:
-            self.current_action[0] = min(self.current_action[0] + 1, 4)
+            self.current_action[1] = min(self.current_action[1] + 1, 1)
         # Back
         if self.keys[pygame.K_k]:
-            self.current_action[0] = max(self.current_action[0] - 1, 0)
+            self.current_action[1] = max(self.current_action[1] - 1, -1)
         # Left
         if self.keys[pygame.K_j]:
-            self.current_action[1] = max(self.current_action[1] - 1, 0)
+            self.current_action[0] = max(self.current_action[0] - 1, -1)
         # Right
         if self.keys[pygame.K_l]:
-            self.current_action[1] = min(self.current_action[1] + 1, 4)
+            self.current_action[0] = min(self.current_action[0] + 1, 1)
 
 
     def draw(self):
         self.screen.fill(RaceTrackGame.BACKGROUND_COLOR)
         self.render_current_action()
         self.render_track()
+        self.render_car()
 
     def render_current_action(self):
-        current_action_string = f'[Vertical: {self.current_action[0]}, Horizontal: {self.current_action[1]}]'
+        current_action_string = f'[Horizontal: {self.current_action[0]}, Vertical: {self.current_action[1]}]'
         font = pygame.font.SysFont(pygame.font.get_default_font(), self.FONT_SIZE)
         text_surface = font.render(current_action_string, True, self.FONT_COLOR)
         self.screen.blit(text_surface, (10, 10))
 
-    def draw_cell(self, cell, position, size):
+    def render_track(self):
+        for row in range(len(self.racetrack.track)):
+            for col in range(len(self.racetrack.track[row])):
+                cell = self.racetrack.track[row][col]
+                self.draw_cell(cell, col, row)
+
+    def render_car(self):
+        self.draw_cell(RaceTrack.CAR, self.racetrack.car_location[0], self.racetrack.car_location[1])
+
+    def get_track_pixel_pos(self, col, row):
+        return (self.track_top_left[0] + col*self.cell_size[0], self.track_top_left[1] + row*self.cell_size[1])
+
+    def draw_cell(self, cell, col, row):
         if cell == RaceTrack.OOB:
             color = RaceTrackGame.OOB_COLOR
         elif cell == RaceTrack.FINISH:
@@ -118,19 +142,14 @@ class RaceTrackGame:
             color = RaceTrackGame.TRACK_COLOR
         elif cell == RaceTrack.START:
             color = RaceTrackGame.START_COLOR
+        elif cell == RaceTrack.CAR:
+            color = RaceTrackGame.CAR_COLOR
         else:
             raise ValueError('Unknown cell type')
 
-        pygame.draw.rect(self.screen, color, (position[0], position[1], size[0], size[1]))
+        draw_position = self.get_track_pixel_pos(col, row)
 
-    def render_track(self):
-        draw_position = [self.track_top_left[0], self.track_top_left[1]]
-        for row in self.racetrack.track:
-            for cell in row:
-                self.draw_cell(cell, draw_position, self.cell_size)
-                draw_position[0] += self.cell_size[0]
-            draw_position[0] = self.track_top_left[0]
-            draw_position[1] += self.cell_size[1]
+        pygame.draw.rect(self.screen, color, (draw_position[0], draw_position[1], self.cell_size[0], self.cell_size[1]))
 
     def update(self):
         pass
