@@ -1,63 +1,7 @@
-import csv, os, sys, random
-import pygame
+import os, sys, pygame, time
+import numpy as np
 
-
-class RaceTrack:
-
-    OOB = 0
-    TRACK = 1
-    FINISH = 2
-    START = 3
-    CAR = 4
-
-    def __init__(self, csv_path):
-        self.track = []
-        self.start_locations = []
-        with open(csv_path, 'r') as csvfile:
-            track_layout = csv.reader(csvfile, delimiter=',')
-            row_num = 0
-            for row in track_layout:
-                new_row = []
-                col_num = 0
-                for cell in row:
-                    new_cell = int(cell)
-                    if new_cell == RaceTrack.START:
-                        self.start_locations.append([col_num, row_num])
-                    new_row.append(new_cell)
-                    col_num += 1
-                self.track.append(new_row)
-                row_num += 1
-        self.current_speed = [0, 0]
-        self.car_location = [0, 0]
-
-        # Init car
-        self.restart_car()
-
-    def perform_action(self, action):
-        self.current_speed[0] = max(min(self.current_speed[0] + action[0], 4), 0)
-        self.current_speed[1] = max(min(self.current_speed[1] + action[1], 4), 0)
-        self.adjust_car_position()
-        if self.out_of_bounds():
-            self.restart_car()
-
-    def out_of_bounds(self):
-        return (self.car_location[0] < 0 or self.car_location[0] >= self.dimensions[0] or
-                self.car_location[1] < 0 or self.car_location[1] >= self.dimensions[1] or
-                self.track[self.car_location[1]][self.car_location[0]] == self.OOB)
-
-    def restart_car(self):
-        random_start = self.start_locations[random.randint(0, len(self.start_locations) - 1)]
-        self.car_location[0] = random_start[0]
-        self.car_location[1] = random_start[1]
-        self.current_speed = [0, 0]
-
-    def adjust_car_position(self):
-        self.car_location[0] += self.current_speed[0]
-        self.car_location[1] -= self.current_speed[1]
-
-    @property
-    def dimensions(self):
-        return (len(self.track[0]), len(self.track))
+from monte_carlo.racetrack import RaceTrack, RacerBot
 
 
 class RaceTrackGame:
@@ -72,8 +16,9 @@ class RaceTrackGame:
     CAR_COLOR = (0, 0, 0)
     BACKGROUND_COLOR = (0, 50, 50)
     CELL_BORDER = 2
+    SPEED_RIGHT_MARGIN = SCREEN_SIZE[0]/2
 
-    FONT_SIZE = 30
+    FONT_SIZE = 25
     FONT_HEIGHT = 30
     FONT_COLOR = (255, 255, 255)
 
@@ -90,6 +35,7 @@ class RaceTrackGame:
         self.keys = pygame.key.get_pressed()
         self.racetrack = RaceTrack(racetrack_csv)
         self.current_action = [0, 0]
+        self.font = pygame.font.SysFont(pygame.font.get_default_font(), self.FONT_SIZE)
 
         self.cell_size = self.get_cell_size()
         self.track_top_left = self.get_track_drawing_info()
@@ -124,17 +70,22 @@ class RaceTrackGame:
             self.current_action[0] = min(self.current_action[0] + 1, 1)
 
 
-    def draw(self):
+    def draw(self, action):
         self.screen.fill(RaceTrackGame.BACKGROUND_COLOR)
-        self.render_current_action()
+        self.render_current_action(action)
+        self.render_current_speed()
         self.render_track()
         self.render_car()
 
-    def render_current_action(self):
-        current_action_string = f'[Horizontal: {self.current_action[0]}, Vertical: {self.current_action[1]}]'
-        font = pygame.font.SysFont(pygame.font.get_default_font(), self.FONT_SIZE)
-        text_surface = font.render(current_action_string, True, self.FONT_COLOR)
+    def render_current_action(self, action):
+        current_action_string = f'[H: {action[0]}, V: {action[1]}]'
+        text_surface = self.font.render(current_action_string, True, self.FONT_COLOR)
         self.screen.blit(text_surface, (10, 10))
+
+    def render_current_speed(self):
+        current_speed_string = f'Current speed: H: {self.racetrack.current_speed[0]}, V: {self.racetrack.current_speed[1]}'
+        text_surface = self.font.render(current_speed_string, True, self.FONT_COLOR)
+        self.screen.blit(text_surface, (self.SCREEN_SIZE[0] - self.SPEED_RIGHT_MARGIN, 10))
 
     def render_track(self):
         for row in range(len(self.racetrack.track)):
@@ -166,9 +117,6 @@ class RaceTrackGame:
 
         pygame.draw.rect(self.screen, color, (draw_position[0], draw_position[1], self.cell_size[0] - self.CELL_BORDER, self.cell_size[1] - self.CELL_BORDER))
 
-    def update(self):
-        pass
-
     def event_loop(self):
         for event in pygame.event.get():
             self.keys = pygame.key.get_pressed()
@@ -176,26 +124,59 @@ class RaceTrackGame:
                 self.done = True
             self.update_current_action()
             if self.keys[pygame.K_RETURN]:
-                self.racetrack.perform_action(self.current_action)
+                a = self.racetrack.action_to_id(self.current_action)
+                self.racetrack.perform_action(a)
+
+    def bot_loop(self, bot, episodes):
+        for episode in range(episodes):
+            location = self.racetrack.car_location
+            speed = self.racetrack.current_speed
+            state = (location[0], location[1], speed[0], speed[1])
+            state_id = self.racetrack.state_to_id(state)
+            done = False
+            while not done:
+                a = bot.get_action(state_id)
+                self.draw(self.racetrack.id_to_action(a))
+                pygame.display.flip()
+                (r, state_id, done) = self.racetrack.perform_action(a)
+                time.sleep(1)
+
 
     def main_loop(self):
         while not self.done:
             self.event_loop()
-            self.update()
-            self.draw()
+            self.draw(self.current_action)
             pygame.display.flip()
 
     @staticmethod
-    def run(racetrack_file):
+    def init():
         os.environ['SDL_VIDEO_CENTERED'] = '1'
         pygame.init()
         pygame.display.set_caption(RaceTrackGame.CAPTION)
         pygame.display.set_mode(RaceTrackGame.SCREEN_SIZE)
-        game = RaceTrackGame(racetrack_file)
-        game.main_loop()
+
+    @staticmethod
+    def quit():
         pygame.quit()
         sys.exit()
 
+    @staticmethod
+    def bot_run(racetrack_file, bot, episodes=10):
+        RaceTrackGame.init()
+        game = RaceTrackGame(racetrack_file)
+        game.bot_loop(bot, episodes)
+        RaceTrackGame.quit()
 
-if __name__ == "__main__":
-    RaceTrackGame.run('./racetracks/racetrack_a.csv')
+    @staticmethod
+    def run(racetrack_file):
+        RaceTrackGame.init()
+        game = RaceTrackGame(racetrack_file)
+        game.main_loop()
+        RaceTrackGame.quit()
+
+
+# RaceTrackGame.run('./monte_carlo/racetracks/racetrack_a.csv')
+
+policy = np.zeros((1, 9)) + (1/9)
+bot = RacerBot(np.tile(policy, (20000, 1)))
+RaceTrackGame.bot_run('./monte_carlo/racetracks/racetrack_a.csv', bot, episodes=3)
