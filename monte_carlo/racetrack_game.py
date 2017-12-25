@@ -40,6 +40,8 @@ class RaceTrackGame:
         self.cell_size = self.get_cell_size()
         self.track_top_left = self.get_track_drawing_info()
 
+        self.current_state = self.racetrack.starting_line_state()
+
     def get_cell_size(self):
         track_dimensions = self.racetrack.dimensions
         return (int(self.TRACK_SIZE[0] / track_dimensions[0]), int(self.TRACK_SIZE[1] / track_dimensions[1]))
@@ -69,21 +71,23 @@ class RaceTrackGame:
         if self.keys[pygame.K_l]:
             self.current_action[0] = min(self.current_action[0] + 1, 1)
 
-
-    def draw(self, action):
+    def draw(self, state, action):
         self.screen.fill(RaceTrackGame.BACKGROUND_COLOR)
         self.render_current_action(action)
-        self.render_current_speed()
+        self.render_game_state(state)
+
+    def render_game_state(self, state):
         self.render_track()
-        self.render_car()
+        self.render_current_speed((state[2], state[3]))
+        self.render_car((state[0], state[1]))
 
     def render_current_action(self, action):
         current_action_string = f'[H: {action[0]}, V: {action[1]}]'
         text_surface = self.font.render(current_action_string, True, self.FONT_COLOR)
         self.screen.blit(text_surface, (10, 10))
 
-    def render_current_speed(self):
-        current_speed_string = f'Current speed: H: {self.racetrack.current_speed[0]}, V: {self.racetrack.current_speed[1]}'
+    def render_current_speed(self, speed):
+        current_speed_string = f'Current speed: H: {speed[0]}, V: {speed[1]}'
         text_surface = self.font.render(current_speed_string, True, self.FONT_COLOR)
         self.screen.blit(text_surface, (self.SCREEN_SIZE[0] - self.SPEED_RIGHT_MARGIN, 10))
 
@@ -93,8 +97,8 @@ class RaceTrackGame:
                 cell = self.racetrack.track[row][col]
                 self.draw_cell(cell, col, row)
 
-    def render_car(self):
-        self.draw_cell(RaceTrack.CAR, self.racetrack.car_location[0], self.racetrack.car_location[1])
+    def render_car(self, location):
+        self.draw_cell(RaceTrack.CAR, location[0], location[1])
 
     def get_track_pixel_pos(self, col, row):
         return (self.track_top_left[0] + col*self.cell_size[0], self.track_top_left[1] + row*self.cell_size[1])
@@ -125,27 +129,29 @@ class RaceTrackGame:
             self.update_current_action()
             if self.keys[pygame.K_RETURN]:
                 a = self.racetrack.action_to_id(self.current_action)
-                self.racetrack.perform_action(a)
+                s = self.racetrack.state_to_id(self.current_state)
+                (r, s, finished) = self.racetrack.perform_action(s, a)
+                self.current_state = self.racetrack.id_to_state(s)
+                if finished:
+                    print('Finished!!')
 
     def bot_loop(self, bot, episodes):
         for episode in range(episodes):
-            location = self.racetrack.car_location
-            speed = self.racetrack.current_speed
-            state = (location[0], location[1], speed[0], speed[1])
-            state_id = self.racetrack.state_to_id(state)
+            state = self.racetrack.starting_line_state()
+            s = self.racetrack.state_to_id(state)
             done = False
             while not done:
-                a = bot.get_action(state_id)
-                self.draw(self.racetrack.id_to_action(a))
+                a = bot.get_action(s)
+                self.draw(self.racetrack.id_to_state(s), self.racetrack.id_to_action(a))
                 pygame.display.flip()
-                (r, state_id, done) = self.racetrack.perform_action(a)
+                (r, s, done) = self.racetrack.perform_action(s, a)
                 time.sleep(1)
 
 
     def main_loop(self):
         while not self.done:
             self.event_loop()
-            self.draw(self.current_action)
+            self.draw(self.current_state, self.current_action)
             pygame.display.flip()
 
     @staticmethod
