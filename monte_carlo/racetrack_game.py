@@ -145,7 +145,7 @@ class RaceTrackGame:
                 self.draw(self.racetrack.id_to_state(s), self.racetrack.id_to_action(a))
                 pygame.display.flip()
                 (r, s, done) = self.racetrack.perform_action(s, a)
-                time.sleep(1)
+                time.sleep(0.2)
 
 
     def main_loop(self):
@@ -183,6 +183,6 @@ class RaceTrackGame:
 
 # RaceTrackGame.run('./monte_carlo/racetracks/racetrack_a.csv')
 
-policy = np.zeros((1, 9)) + (1/9)
-bot = RacerBot(np.tile(policy, (20000, 1)))
-RaceTrackGame.bot_run('./monte_carlo/racetracks/racetrack_a.csv', bot, episodes=3)
+# policy = np.zeros((1, 9)) + (1/9)
+# bot = RacerBot(np.tile(policy, (20000, 1)))
+# RaceTrackGame.bot_run('./monte_carlo/racetracks/racetrack_a.csv', bot, episodes=3)

@@ -14,7 +14,20 @@ import numpy as np
 from tqdm import tqdm
 
 
-def on_policy_fv_mc_e_soft_control():
+def sample_action(policy, state):
+    """
+    Samples a policy for an action given the current state.
+    """
+    return np.random.choice(np.arange(0, policy.shape[1]), p=policy[state])
+
+
+def on_policy_fv_mc_e_soft_control(environment, epsilon=0.1):
+    policy = np.zeros(environment.num_states(), environment.num_actions()) + (1/environment.num_actions())
+    Q = np.zeros((environment.num_states(), environment.num_actions()))
+    N = np.zeros((environment.num_states(), environment.num_actions()))
+
+    one_episode_state_action_values(environment, lambda s: sample_action(policy, s), random_start=False)
+
     pass
 
 
@@ -22,13 +35,14 @@ def get_greedy_policy(Q):
     return np.argmax(Q, axis=1)
 
 
-def policy_improvement(environment, iterations=100000):
+def det_policy_improvement(environment, iterations=100000):
     policy = np.zeros(environment.num_states(), dtype=int)
     Q = np.zeros((environment.num_states(), environment.num_actions()))
     N = np.zeros((environment.num_states(), environment.num_actions()))
+
     for i in tqdm(range(iterations)):
 
-        states_seen = one_episode_state_action_values(environment, policy, random_start=True)
+        states_seen = one_episode_state_action_values(environment, lambda s: policy[s], random_start=True)
 
         for state, actions_performed in states_seen.items():
             for action, gain in actions_performed.items():
@@ -44,7 +58,8 @@ def one_episode_state_action_values(environment, policy, random_start=True):
     s = environment.get_random_state()
     states_seen = {}
     first_action = True
-    while not environment.is_terminal(s):
+    episode_over = False
+    while not episode_over:
         # If this is the first time we've seen this state
         if states_seen.get(s, None) is None:
             states_seen[s] = {}
@@ -54,14 +69,14 @@ def one_episode_state_action_values(environment, policy, random_start=True):
             first_action = False
         else:
             # Perform our action
-            a = policy[s]
+            a = policy(s)
 
         # If this is the first time we've performed this action
         # in this state
         if states_seen[s].get(a, None) is None:
             states_seen[s][a] = 0
 
-        (r, s_prime) = environment.perform_action(s, a)
+        (r, s_prime, episode_over) = environment.perform_action(s, a)
 
         # Update our gain counters
         states_seen = \
@@ -69,7 +84,7 @@ def one_episode_state_action_values(environment, policy, random_start=True):
                 state: {action: gain + r for action, gain in actions_performed.items()}
                 for state, actions_performed
                 in states_seen.items()
-                }
+            }
 
         # Update current state
         s = s_prime
@@ -77,9 +92,9 @@ def one_episode_state_action_values(environment, policy, random_start=True):
     return states_seen
 
 
-def fv_policy_q_evaluation(environment, policy, episodes=10000):
+def det_fv_policy_q_evaluation(environment, policy, episodes=10000):
     """
-    First visit MC action-value policy evaluation with exploring starts.
+    First visit MC action-value deterministic policy evaluation with exploring starts.
 
     Returns the action-value function.
     """
@@ -87,7 +102,7 @@ def fv_policy_q_evaluation(environment, policy, episodes=10000):
     N = np.zeros((environment.num_states(), environment.num_actions()))
 
     for episode in tqdm(range(episodes)):
-        states_seen = one_episode_state_action_values(environment, policy, random_start=True)
+        states_seen = one_episode_state_action_values(environment, lambda s: policy[s], random_start=True)
         for state, actions_performed in states_seen.items():
             for action, gain in actions_performed.items():
                 N[state, action] = N[state, action] + 1
@@ -108,14 +123,15 @@ def fv_policy_evaluation(environment, policy, episodes=10000):
     for episode in tqdm(range(episodes)):
         s = environment.get_random_state()
         states_seen = {}
-        while not environment.is_terminal(s):
+        episode_over = False
+        while not episode_over:
             # If this is the first time we've seen this state
             if states_seen.get(s, None) is None:
                 states_seen[s] = 0
 
             # Perform our action
             a = policy[s]
-            (r, s_prime) = environment.perform_action(s, a)
+            (r, s_prime, episode_over) = environment.perform_action(s, a)
 
             # Update our gain counters
             states_seen = {state: gain + r for state, gain in states_seen.items()}

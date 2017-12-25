@@ -193,15 +193,15 @@ class Blackjack:
                     # Ace becomes 1
                     player_sum -= 10
                     next_state = (dealer_card, player_sum, False)
-                    return (0, BlackjackStates.state_to_id(next_state))
+                    return (0, BlackjackStates.state_to_id(next_state), False)
                 else:
                     # Lose
                     self.debug_print(f'You busted with {player_sum}.')
-                    return (-1, self.GAME_OVER_STATE)
+                    return (-1, self.GAME_OVER_STATE, True)
             else:
                 # Still <= 21
                 next_state = (dealer_card, player_sum, usable_ace)
-                return (0, BlackjackStates.state_to_id(next_state))
+                return (0, BlackjackStates.state_to_id(next_state), False)
         elif action == self.STAY_ACTION:
             self.debug_print(f'You stayed!')
             # Dealer's turn
@@ -223,24 +223,24 @@ class Blackjack:
                     # If dealer doesn't have 21 after first draw,
                     # player immediately wins.
                     self.debug_print(f'You win!')
-                    return (1, self.GAME_OVER_STATE)
+                    return (1, self.GAME_OVER_STATE, True)
 
             if dealer_sum > 21:
                 # Dealer busted
                 self.debug_print(f'Dealer busted.')
-                return (1, self.GAME_OVER_STATE)
+                return (1, self.GAME_OVER_STATE, True)
             else:
                 if dealer_sum > player_sum:
                     # Lose
                     self.debug_print(f'Dealer won with {dealer_sum}.')
-                    return (-1, self.GAME_OVER_STATE)
+                    return (-1, self.GAME_OVER_STATE, True)
                 elif dealer_sum == player_sum:
                     self.debug_print(f'Draw. Dealer and player both have {player_sum}.')
-                    return (0, self.GAME_OVER_STATE)
+                    return (0, self.GAME_OVER_STATE, True)
                 else:
                     # Win
                     self.debug_print(f'You won! Dealer: {dealer_sum}. You: {player_sum}.')
-                    return (1, self.GAME_OVER_STATE)
+                    return (1, self.GAME_OVER_STATE, True)
         else:
             raise ValueError('This is not a valid action.')
 

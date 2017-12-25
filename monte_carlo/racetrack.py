@@ -10,7 +10,6 @@ class RacerBot:
     def get_action(self, state_id):
         choices = np.arange(0, self.policy.shape[1])
         probabilities = self.policy[state_id]
-        print(f'Choices: {choices}, Probs: {probabilities}')
         return np.random.choice(choices, p=probabilities)
 
 

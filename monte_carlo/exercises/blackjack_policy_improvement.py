@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 
 blackjack = Blackjack(verbose=args.verbose)
-optimal_policy, Q = mc.policy_improvement(blackjack, iterations=args.iterations)
+optimal_policy, Q = mc.det_policy_improvement(blackjack, iterations=args.iterations)
 
 if args.verbose:
     for state_id in range(optimal_policy.shape[0]):
