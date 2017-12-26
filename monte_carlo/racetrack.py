@@ -10,6 +10,7 @@ class RacerBot:
     def get_action(self, state_id):
         choices = np.arange(0, self.policy.shape[1])
         probabilities = self.policy[state_id]
+        probabilities /= probabilities.sum()
         return np.random.choice(choices, p=probabilities)
 
 
@@ -97,6 +98,8 @@ class RaceTrack:
 
         current_speed[0] = max(min(current_speed[0] + action[0], self.MAX_SPEED - 1), 0)
         current_speed[1] = max(min(current_speed[1] + action[1], self.MAX_SPEED - 1), 0)
+        if current_speed[0] == 0 and current_speed[1] == 0:
+            current_speed[1] = 1
         if self.crosses_finish_line(current_location, current_speed):
             next_state = self.starting_line_state()
             return (0, self.state_to_id(next_state), True)
@@ -104,7 +107,7 @@ class RaceTrack:
             next_location = self.get_next_location(current_location, current_speed)
             if self.out_of_bounds(next_location):
                 next_state = self.starting_line_state()
-                return (-1, self.state_to_id(next_state), False)
+                return (-5, self.state_to_id(next_state), False)
             next_state = (next_location[0], next_location[1], current_speed[0], current_speed[1])
             return (-1, self.state_to_id(next_state), False)
 
@@ -135,10 +138,12 @@ class RaceTrack:
         next_loc = [location[0] + speed[0], location[1] - speed[1]]
         return next_loc
 
+    def get_starting_state(self):
+        return self.state_to_id(self.starting_line_state())
+
     def starting_line_state(self):
         random_start = self.start_locations[random.randint(0, len(self.start_locations) - 1)]
         ret = (random_start[0], random_start[1], 0, 0)
-        print(ret)
         return ret
 
     @property

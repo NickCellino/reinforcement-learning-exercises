@@ -18,21 +18,24 @@ def sample_action(policy, state):
     """
     Samples a policy for an action given the current state.
     """
-    return np.random.choice(np.arange(0, policy.shape[1]), p=policy[state])
+    choices = np.arange(0, policy.shape[1])
+    probabilities = policy[state]
 
-
-def on_policy_fv_mc_e_soft_control(environment, epsilon=0.1):
-    policy = np.zeros(environment.num_states(), environment.num_actions()) + (1/environment.num_actions())
-    Q = np.zeros((environment.num_states(), environment.num_actions()))
-    N = np.zeros((environment.num_states(), environment.num_actions()))
-
-    one_episode_state_action_values(environment, lambda s: sample_action(policy, s), random_start=False)
-
-    pass
+    return np.random.choice(choices, p=probabilities)
 
 
 def get_greedy_policy(Q):
     return np.argmax(Q, axis=1)
+
+
+def get_epsilon_greedy_policy(Q, states_seen, epsilon):
+    num_actions = Q.shape[1]
+    policy = (epsilon/num_actions) * np.ones(Q.shape)
+
+    greedy_action_indices = np.argmax(Q, axis=1)
+    policy[np.arange(0, Q.shape[0]), greedy_action_indices] += (1 - epsilon)
+
+    return policy
 
 
 def det_policy_improvement(environment, iterations=100000):
@@ -55,7 +58,7 @@ def det_policy_improvement(environment, iterations=100000):
 
 
 def one_episode_state_action_values(environment, policy, random_start=True):
-    s = environment.get_random_state()
+    s = environment.get_starting_state()
     states_seen = {}
     first_action = True
     episode_over = False
@@ -90,6 +93,36 @@ def one_episode_state_action_values(environment, policy, random_start=True):
         s = s_prime
 
     return states_seen
+
+
+def on_policy_fv_mc_e_soft_control(
+        environment,
+        epsilon_func=lambda ep, eps: 0.1,
+        alpha_func=lambda n: 0.1,
+        episodes=10000,
+        random_start=False
+    ):
+    # Initialize with uniform random policy
+
+    policy = (1/environment.num_actions()) * np.ones((environment.num_states(), environment.num_actions()))
+    # policy = np.zeros((environment.num_states(), environment.num_actions()))
+    # policy[:, 0] = 1
+
+    Q = np.zeros((environment.num_states(), environment.num_actions()))
+    N = np.zeros((environment.num_states(), environment.num_actions()))
+
+    for episode in range(episodes):
+        states_seen = one_episode_state_action_values(environment, lambda s: sample_action(policy, s), random_start=random_start)
+        for state, actions_performed in states_seen.items():
+            for action, gain in actions_performed.items():
+                N[state, action] = N[state, action] + 1
+                Q[state, action] = Q[state, action] + alpha_func(N[state, action])*(gain - Q[state, action])
+            epsilon = epsilon_func(episode, episodes)
+            num_actions = Q.shape[1]
+            policy[state] = (epsilon/num_actions)
+            policy[state, np.argmax(Q[state])] += 1 - epsilon
+
+    return policy, Q
 
 
 def det_fv_policy_q_evaluation(environment, policy, episodes=10000):

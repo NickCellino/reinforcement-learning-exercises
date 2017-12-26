@@ -135,7 +135,7 @@ class RaceTrackGame:
                 if finished:
                     print('Finished!!')
 
-    def bot_loop(self, bot, episodes):
+    def bot_loop(self, bot, episodes, timestep):
         for episode in range(episodes):
             state = self.racetrack.starting_line_state()
             s = self.racetrack.state_to_id(state)
@@ -145,7 +145,7 @@ class RaceTrackGame:
                 self.draw(self.racetrack.id_to_state(s), self.racetrack.id_to_action(a))
                 pygame.display.flip()
                 (r, s, done) = self.racetrack.perform_action(s, a)
-                time.sleep(0.2)
+                time.sleep(timestep)
 
 
     def main_loop(self):
@@ -167,10 +167,12 @@ class RaceTrackGame:
         sys.exit()
 
     @staticmethod
-    def bot_run(racetrack_file, bot, episodes=10):
+    def bot_run(racetrack_file, policy_file, episodes=10, timestep=1):
         RaceTrackGame.init()
+        policy = np.load(policy_file)
+        bot = RacerBot(policy)
         game = RaceTrackGame(racetrack_file)
-        game.bot_loop(bot, episodes)
+        game.bot_loop(bot, episodes, timestep)
         RaceTrackGame.quit()
 
     @staticmethod
@@ -179,10 +181,3 @@ class RaceTrackGame:
         game = RaceTrackGame(racetrack_file)
         game.main_loop()
         RaceTrackGame.quit()
-
-
-# RaceTrackGame.run('./monte_carlo/racetracks/racetrack_a.csv')
-
-# policy = np.zeros((1, 9)) + (1/9)
-# bot = RacerBot(np.tile(policy, (20000, 1)))
-# RaceTrackGame.bot_run('./monte_carlo/racetracks/racetrack_a.csv', bot, episodes=3)

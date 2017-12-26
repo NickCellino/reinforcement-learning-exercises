@@ -175,6 +175,9 @@ class Blackjack:
     def num_actions(self):
         return 2
 
+    def get_starting_state(self):
+        return self.get_random_state()
+
     def get_random_state(self):
         return randint(0, self.num_states() - 1)
 
