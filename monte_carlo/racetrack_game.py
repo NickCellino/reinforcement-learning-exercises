@@ -42,6 +42,8 @@ class RaceTrackGame:
 
         self.current_state = self.racetrack.starting_line_state()
 
+        self.current_score = 0
+
     def get_cell_size(self):
         track_dimensions = self.racetrack.dimensions
         return (int(self.TRACK_SIZE[0] / track_dimensions[0]), int(self.TRACK_SIZE[1] / track_dimensions[1]))
@@ -131,9 +133,12 @@ class RaceTrackGame:
                 a = self.racetrack.action_to_id(self.current_action)
                 s = self.racetrack.state_to_id(self.current_state)
                 (r, s, finished) = self.racetrack.perform_action(s, a)
+                self.current_score += r
                 self.current_state = self.racetrack.id_to_state(s)
                 if finished:
                     print('Finished!!')
+                    print(f'You scored: {self.current_score}')
+                    self.current_score = 0
 
     def bot_loop(self, bot, episodes, timestep):
         for episode in range(episodes):

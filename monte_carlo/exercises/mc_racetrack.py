@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Evaluation')
+parser = argparse.ArgumentParser(description='Monte Carlo Racetrack Policy Improvement')
 
 parser.add_argument('racetrack',
                     type=str,

@@ -3,7 +3,7 @@ from monte_carlo import mc
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Q Evaluation')
+parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Soft Policy Improvement')
 
 parser.add_argument('--iterations',
                     type=int,
