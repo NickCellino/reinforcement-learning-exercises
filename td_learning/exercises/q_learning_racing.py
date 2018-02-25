@@ -1,10 +1,10 @@
 from environments.racing.racing import RaceTrack
-from monte_carlo import mc
+from td_learning import td
 import numpy as np
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Monte Carlo Racetrack Policy Improvement')
+parser = argparse.ArgumentParser(description='Q Learning Racetrack')
 
 parser.add_argument('racetrack',
                     type=str,
@@ -16,19 +16,24 @@ parser.add_argument('--episodes',
                     type=int,
                     help='Number of episodes to train over',
                     default=1000)
+parser.add_argument('--convergence',
+                    type=float,
+                    help='Convergence criteria for Q',
+                    default=0.001)
 parser.add_argument('--verbose',
                     type=bool,
                     help='Print (a lot of) log messages',
                     default=False)
 args = parser.parse_args()
 
+print(args.convergence)
 
 racetrack = RaceTrack(args.racetrack)
-policy, Q = mc.on_policy_fv_mc_e_soft_control(
+policy, Q = td.q_learning(
     racetrack,
-    epsilon_func=lambda ep, eps: 1 - (ep/eps),
-    alpha_func=lambda n: 0.1,
-    episodes=args.episodes
+    alpha_func=lambda n: 1/n,
+    epsilon=0.2,
+    convergence=args.convergence
 )
 
 np.save(args.policy, policy)

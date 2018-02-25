@@ -1,10 +1,10 @@
 from environments.racing.racing import RaceTrack
-from monte_carlo import mc
+from td_learning import td
 import numpy as np
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Monte Carlo Racetrack Policy Improvement')
+parser = argparse.ArgumentParser(description='Sarsa Racetrack Policy Improvement')
 
 parser.add_argument('racetrack',
                     type=str,
@@ -22,12 +22,14 @@ parser.add_argument('--verbose',
                     default=False)
 args = parser.parse_args()
 
+def epsilon_schedule(ep, eps, r=1.001):
+    return ((1 - (r**(-ep))) / (r**(-eps) - 1)) + 1
+
 
 racetrack = RaceTrack(args.racetrack)
-policy, Q = mc.on_policy_fv_mc_e_soft_control(
+policy, Q = td.sarsa(
     racetrack,
-    epsilon_func=lambda ep, eps: 1 - (ep/eps),
-    alpha_func=lambda n: 0.1,
+    epsilon_func=lambda ep, eps: epsilon_schedule(ep, eps),
     episodes=args.episodes
 )
 

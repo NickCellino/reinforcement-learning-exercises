@@ -1,4 +1,4 @@
-from monte_carlo.racetrack_game import RaceTrackGame
+from environments.racing.racing import RaceTrackGame
 import argparse
 
 parser = argparse.ArgumentParser(description='Interactive Race Track Game')

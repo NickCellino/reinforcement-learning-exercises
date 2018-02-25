@@ -1,6 +1,4 @@
-from monte_carlo.racetrack import RacerBot
-from monte_carlo.racetrack_game import RaceTrackGame
-import numpy as np
+from environments.racing.racing import RaceTrackGame
 import argparse
 
 
@@ -15,7 +13,7 @@ parser.add_argument('policy',
 parser.add_argument('--timestep',
                     type=float,
                     help='Length of timesteps (s)',
-                    default=0.5)
+                    default=0.1)
 parser.add_argument('--episodes',
                     type=int,
                     help='Number of episodes to train over',

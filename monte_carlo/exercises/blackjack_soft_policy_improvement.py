@@ -1,7 +1,8 @@
-from monte_carlo.blackjack import Blackjack, BlackjackStates, BlackjackPlotter
-from monte_carlo import mc
 import argparse
 
+import lib.policy
+from environments.blackjack.blackjack import Blackjack, BlackjackStates, BlackjackPlotter
+from monte_carlo import mc
 
 parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Soft Policy Improvement')
 
@@ -25,7 +26,7 @@ soft_optimal_policy, Q = mc.on_policy_fv_mc_e_soft_control(
     random_start=True
 )
 
-optimal_policy = mc.get_greedy_policy(Q)
+optimal_policy = lib.policy.get_greedy_policy(Q)
 
 if args.verbose:
     for state_id in range(optimal_policy.shape[0]):

@@ -1,7 +1,7 @@
-from monte_carlo.blackjack import Blackjack, BlackjackStates, BlackjackPlotter
-from monte_carlo import mc
 import argparse
 
+from environments.blackjack.blackjack import Blackjack, BlackjackStates, BlackjackPlotter
+from monte_carlo import mc
 
 parser = argparse.ArgumentParser(description='Blackjack Monte Carlo Policy Improvement')
 

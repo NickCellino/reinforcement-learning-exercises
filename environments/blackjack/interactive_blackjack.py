@@ -1,4 +1,4 @@
-from monte_carlo.blackjack import *
+from environments.blackjack.blackjack import *
 
 blackjack = Blackjack()
 state = blackjack.get_random_state()

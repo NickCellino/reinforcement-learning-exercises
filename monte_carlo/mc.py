@@ -8,34 +8,13 @@ An environment is assumed to support the following operations:
     environment.perform_action(a): Returns a reward and the next state (r, s')
     environment.is_terminal(s): Returns whether a state is terminal or not
 
-A (deterministic) policy is a environment.num_states x 1 array
+A deterministic policy is a environment.num_states x 1 array
+A non-deterministic policy is a environment.num_states x environment.num_actions array
 """
 import numpy as np
 from tqdm import tqdm
 
-
-def sample_action(policy, state):
-    """
-    Samples a policy for an action given the current state.
-    """
-    choices = np.arange(0, policy.shape[1])
-    probabilities = policy[state]
-
-    return np.random.choice(choices, p=probabilities)
-
-
-def get_greedy_policy(Q):
-    return np.argmax(Q, axis=1)
-
-
-def get_epsilon_greedy_policy(Q, states_seen, epsilon):
-    num_actions = Q.shape[1]
-    policy = (epsilon/num_actions) * np.ones(Q.shape)
-
-    greedy_action_indices = np.argmax(Q, axis=1)
-    policy[np.arange(0, Q.shape[0]), greedy_action_indices] += (1 - epsilon)
-
-    return policy
+from lib.policy import sample_action, get_greedy_policy
 
 
 def det_policy_improvement(environment, iterations=100000):
@@ -62,6 +41,7 @@ def one_episode_state_action_values(environment, policy, random_start=True):
     states_seen = {}
     first_action = True
     episode_over = False
+    steps_taken = 0
     while not episode_over:
         # If this is the first time we've seen this state
         if states_seen.get(s, None) is None:
@@ -89,8 +69,12 @@ def one_episode_state_action_values(environment, policy, random_start=True):
                 in states_seen.items()
             }
 
+        steps_taken += 1
+
         # Update current state
         s = s_prime
+
+    print(f'{steps_taken}')
 
     return states_seen
 
@@ -105,8 +89,6 @@ def on_policy_fv_mc_e_soft_control(
     # Initialize with uniform random policy
 
     policy = (1/environment.num_actions()) * np.ones((environment.num_states(), environment.num_actions()))
-    # policy = np.zeros((environment.num_states(), environment.num_actions()))
-    # policy[:, 0] = 1
 
     Q = np.zeros((environment.num_states(), environment.num_actions()))
     N = np.zeros((environment.num_states(), environment.num_actions()))

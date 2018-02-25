@@ -1,5 +1,6 @@
 import numpy as np
-from monte_carlo.blackjack import Blackjack, BlackjackStates
+
+from environments.blackjack.blackjack import Blackjack, BlackjackStates
 
 
 class BlackjackPolicy:
