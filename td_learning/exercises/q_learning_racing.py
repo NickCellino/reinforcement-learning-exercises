@@ -12,21 +12,15 @@ parser.add_argument('racetrack',
 parser.add_argument('policy',
                     type=str,
                     help='Path at which to save policy file')
-parser.add_argument('--episodes',
-                    type=int,
-                    help='Number of episodes to train over',
-                    default=1000)
 parser.add_argument('--convergence',
                     type=float,
                     help='Convergence criteria for Q',
-                    default=0.001)
+                    default=10000)
 parser.add_argument('--verbose',
                     type=bool,
                     help='Print (a lot of) log messages',
                     default=False)
 args = parser.parse_args()
-
-print(args.convergence)
 
 racetrack = RaceTrack(args.racetrack)
 policy, Q = td.q_learning(

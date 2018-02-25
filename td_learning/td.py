@@ -5,8 +5,8 @@ An environment is assumed to support the following operations:
     environment.num_states(): Returns the number of states in the environment
     environment.num_actions(): Returns the number of actions in the environment
     environment.get_random_state(): Returns a random state
-    environment.perform_action(a): Returns a reward and the next state (r, s')
-    environment.is_terminal(s): Returns whether a state is terminal or not
+    environment.perform_action(a): Returns a reward, the next state (r, s'), and whether
+                                   the episode is over
 
 A deterministic policy is a environment.num_states x 1 array
 A non-deterministic policy is a environment.num_states x environment.num_actions array
