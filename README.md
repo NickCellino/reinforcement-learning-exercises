@@ -1,8 +1,9 @@
 # Reinforcement Learning: An Introduction
 
-This repository contains exercises from [Reinforcement Learning: An Introduction (Second Edition)](https://mitpress.mit.edu/books/reinforcement-learning) by Richard S. Sutton and Andrew G. Barto.
-Each subdirectory in this project contains an overview of a topic covered
-in the book, the results from the exercises, and Python code for the exercises.
+This repository contains (some of the) programming exercises from [Reinforcement Learning: An Introduction (Second Edition)](https://mitpress.mit.edu/books/reinforcement-learning)
+by Richard S. Sutton and Andrew G. Barto. Each subdirectory in this project contains an overview of a topic covered
+in the book, the results from the exercises, and Python code for the exercises. There are also reproductions of some
+of the figures from the book and Python code to go along with them as well.
 
 This is a work in progress.
 
