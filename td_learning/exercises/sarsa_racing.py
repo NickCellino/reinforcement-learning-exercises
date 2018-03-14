@@ -22,14 +22,11 @@ parser.add_argument('--verbose',
                     default=False)
 args = parser.parse_args()
 
-def epsilon_schedule(ep, eps, r=1.001):
-    return ((1 - (r**(-ep))) / (r**(-eps) - 1)) + 1
-
-
 racetrack = RaceTrack(args.racetrack)
 policy, Q = td.sarsa(
     racetrack,
-    epsilon_func=lambda ep, eps: epsilon_schedule(ep, eps),
+    alpha_func=lambda n: 1/n,
+    epsilon_func=lambda ep, eps: 1 - (ep/eps),
     episodes=args.episodes
 )
 

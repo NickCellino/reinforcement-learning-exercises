@@ -13,6 +13,7 @@ This is a work in progress.
 2. [Chapter 3 - The Reinforcement Learning Problem](./rl_problem)
 3. [Chapter 4 - Dynamic Programming](./dynamic_programming)
 4. [Chapter 5 - Monte Carlo Methods](./monte_carlo)
+5. [Chapter 6 - Temporal-Difference Learning](./td_learning)
 
 ## Getting Started
 This project uses Python 3.6 and [venv](https://docs.python.org/3/library/venv.html)
